@@ -117,9 +117,11 @@ jobs:
               issueNumber = created.data.number;
             }
 
-            await github.rest.issues.addAssignees({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              assignees: ['copilot']
-            });
+            // Optional: Assign to repository owner
+            // Uncomment below and replace 'your-username' with your GitHub username to auto-assign
+            // await github.rest.issues.addAssignees({
+            //   owner: context.repo.owner,
+            //   repo: context.repo.repo,
+            //   issue_number: issueNumber,
+            //   assignees: ['your-username']
+            // });

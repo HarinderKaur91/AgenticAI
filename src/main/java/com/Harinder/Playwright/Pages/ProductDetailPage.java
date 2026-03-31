@@ -24,10 +24,12 @@ public class ProductDetailPage {
     }
 
     public void clickAddToCart() {
-        page.locator("button:has-text('Add to cart')").click();
+        // Use force click to bypass ad overlays
+        page.locator("button:has-text('Add to cart')").click(new com.microsoft.playwright.Locator.ClickOptions().setForce(true));
     }
 
     public void clickViewCartFromPopup() {
-        page.locator("text=View Cart").last().click();
+        // Use force click to bypass ad overlays
+        page.locator("text=View Cart").last().click(new com.microsoft.playwright.Locator.ClickOptions().setForce(true));
     }
 }

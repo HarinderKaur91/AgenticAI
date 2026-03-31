@@ -2,6 +2,7 @@ package com.Harinder.Playwright.Base;
 
 import com.microsoft.playwright.*;
 import com.Harinder.Playwright.Pages.*;
+import com.Harinder.Playwright.Utils.LoggerUtil;
 import org.testng.annotations.*;
 
 public class BaseTest {
@@ -20,10 +21,12 @@ public class BaseTest {
 
     @BeforeClass
     public void setUpClass() {  
+        LoggerUtil.info("Initializing Playwright and Browser...");
         playwright = Playwright.create();
 
         boolean headless = Boolean.parseBoolean(System.getProperty("headless", "false"));
         String browserName = System.getProperty("browser", "chromium");
+        LoggerUtil.info("Browser: " + browserName + " | Headless: " + headless);
 
         BrowserType browserType;
         switch (browserName.toLowerCase()) {
@@ -39,14 +42,23 @@ public class BaseTest {
 
         browser = browserType.launch(new BrowserType.LaunchOptions()
                 .setHeadless(headless)
-                .setSlowMo(100));
+                .setSlowMo(100)
+                .setArgs(java.util.Arrays.asList(
+                        "--blink-settings=imagesEnabled=false",
+                        "--disable-extensions"
+                )));
+        LoggerUtil.info("Browser launched successfully");
     }
 
     @BeforeMethod
     public void setUpTest() {
+        LoggerUtil.info("Setting up test context and pages...");
         context = browser.newContext(new Browser.NewContextOptions()
                 .setViewportSize(1440, 900));
         page = context.newPage();
+        // Increase page timeout to handle slow ad iframes
+        page.setDefaultTimeout(60000);
+        page.setDefaultNavigationTimeout(60000);
 
         homePage = new HomePage(page);
         loginPage = new LoginPage(page);
@@ -54,22 +66,27 @@ public class BaseTest {
         productDetailPage = new ProductDetailPage(page);
         cartPage = new CartPage(page);
         contactUsPage = new ContactUsPage(page);
+        LoggerUtil.info("Test context setup complete");
     }
 
     @AfterMethod
     public void tearDownTest() {
+        LoggerUtil.info("Tearing down test context...");
         if (context != null) {
             context.close();
         }
+        LoggerUtil.info("Test context closed");
     }
 
     @AfterClass
     public void tearDownClass() {
+        LoggerUtil.info("Closing browser and Playwright...");
         if (browser != null) {
             browser.close();
         }
         if (playwright != null) {
             playwright.close();
         }
+        LoggerUtil.info("Browser and Playwright closed - Test suite complete");
     }
 }

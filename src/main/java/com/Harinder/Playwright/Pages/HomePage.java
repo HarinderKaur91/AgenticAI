@@ -1,5 +1,6 @@
 package com.Harinder.Playwright.Pages;
 import com.microsoft.playwright.Page;
+import com.Harinder.Playwright.Utils.LoggerUtil;
 
 public class HomePage {
 
@@ -11,42 +12,54 @@ public class HomePage {
     }
 
     public void open() {
+        LoggerUtil.info("Navigating to: " + BASE_URL);
         page.navigate(BASE_URL);
+        LoggerUtil.info("Home page opened successfully");
     }
 
     public boolean isHomePageVisible() {
+        LoggerUtil.debug("Checking if home page is visible");
         page.locator("a[href='/products']").first().waitFor();
         return page.locator("a[href='/products']").first().isVisible();
     }
 
     public void clickProducts() {
+        LoggerUtil.info("Clicking on Products link");
         page.locator("a[href='/products']").first().click();
     }
 
     public void clickSignupLogin() {
+        LoggerUtil.info("Clicking on Signup/Login link");
         page.locator("a[href='/login']").first().click();
     }
 
     public void clickContactUs() {
+        LoggerUtil.info("Clicking on Contact Us link");
         page.locator("a[href='/contact_us']").first().click();
     }
 
     public void clickTestCases() {
+        LoggerUtil.info("Clicking on Test Cases link");
         page.locator("a[href='/test_cases']").first().click();
     }
 
     public void clickCart() {
+        LoggerUtil.info("Clicking on Cart link");
         page.locator("a[href='/view_cart']").first().click();
     }
 
     public void subscribe(String email) {
+        LoggerUtil.info("Subscribing with email: " + email);
         page.locator("#susbscribe_email").scrollIntoViewIfNeeded();
         page.locator("#susbscribe_email").fill(email);
         page.locator("#subscribe").click();
+        LoggerUtil.info("Subscription completed");
     }
 
     public String getSubscriptionSuccessMessage() {
         page.locator(".alert-success.alert").waitFor();
-        return page.locator(".alert-success.alert").textContent().trim();
+        String message = page.locator(".alert-success.alert").textContent().trim();
+        LoggerUtil.info("Subscription message: " + message);
+        return message;
     }
 }
