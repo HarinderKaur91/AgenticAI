@@ -1,0 +1,125 @@
+name: Hourly Test And Auto Fix
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  run-tests:
+    runs-on: windows-latest
+    outputs:
+      tests_failed: ${{ steps.run.outcome == 'failure' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Install Playwright Browsers
+        run: mvn exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+
+      - name: Run Tests
+        id: run
+        run: mvn clean test
+        continue-on-error: true
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/**
+            test-output/**
+
+  open-issue-and-assign-copilot:
+    needs: run-tests
+    if: needs.run-tests.outputs.tests_failed == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-reports
+          path: artifacts
+
+      - name: Create Issue And Assign Copilot
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            function walk(dir) {
+              if (!fs.existsSync(dir)) return [];
+              let out = [];
+              for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+                const p = path.join(dir, e.name);
+                out = e.isDirectory() ? out.concat(walk(p)) : out.concat(p);
+              }
+              return out;
+            }
+
+            let body = `## Automated Test Failure\n\n`;
+            body += `**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\n`;
+            body += `Analyze the failures below, fix the root cause in the source code, and open a PR.\n\n`;
+
+            const files = walk('artifacts').filter(f => f.endsWith('.txt') || f.endsWith('.xml'));
+
+            for (const file of files.slice(0, 8)) {
+              const content = fs.readFileSync(file, 'utf8').slice(0, 3000);
+              if (
+                content.includes('FAILURE') ||
+                content.includes('ERROR') ||
+                content.includes('<failure')
+              ) {
+                body += `### ${path.basename(file)}\n\`\`\`\n${content}\n\`\`\`\n\n`;
+              }
+            }
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'auto-test-failure',
+              state: 'open'
+            });
+
+            let issueNumber;
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body
+              });
+              issueNumber = existing.data[0].number;
+            } else {
+              const created = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Test failures detected',
+                body,
+                labels: ['bug', 'auto-test-failure']
+              });
+              issueNumber = created.data.number;
+            }
+
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              assignees: ['copilot']
+            });
