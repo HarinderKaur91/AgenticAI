@@ -35,15 +35,25 @@ public class TestListener implements ITestListener {
         
         // Take screenshot on failure
         Object testClass = result.getInstance();
+        LoggerUtil.debug("Test instance class: " + (testClass != null ? testClass.getClass().getName() : "null"));
+        
         if (testClass != null) {
             try {
                 Page page = getPageFromTestClass(testClass);
-                if (page != null && !page.isClosed()) {
-                    captureScreenshot(page, result.getMethod().getMethodName());
+                if (page != null) {
+                    if (page.isClosed()) {
+                        LoggerUtil.warn("Page is closed, cannot capture screenshot");
+                    } else {
+                        captureScreenshot(page, result.getMethod().getMethodName());
+                    }
+                } else {
+                    LoggerUtil.warn("Page object not found in test class. Screenshots directory: " + new java.io.File(SCREENSHOT_DIR).getAbsolutePath());
                 }
             } catch (Exception e) {
-                LoggerUtil.error("Failed to capture screenshot: " + e.getMessage());
+                LoggerUtil.error("Failed to capture screenshot: " + e.getMessage(), e);
             }
+        } else {
+            LoggerUtil.error("Test instance is null, cannot capture screenshot");
         }
     }
 
@@ -53,13 +63,42 @@ public class TestListener implements ITestListener {
     }
 
     private Page getPageFromTestClass(Object testClass) {
+        if (testClass == null) {
+            LoggerUtil.debug("Test class is null");
+            return null;
+        }
+
+        // Try to get the page field from the test class
         try {
             java.lang.reflect.Field pageField = testClass.getClass().getDeclaredField("page");
             pageField.setAccessible(true);
-            return (Page) pageField.get(testClass);
+            Page page = (Page) pageField.get(testClass);
+            LoggerUtil.debug("Successfully retrieved Page object from test class");
+            return page;
+        } catch (NoSuchFieldException e) {
+            LoggerUtil.debug("Page field not found in direct class, trying inherited classes");
+            
+            // Try parent classes
+            Class<?> parentClass = testClass.getClass().getSuperclass();
+            while (parentClass != null) {
+                try {
+                    java.lang.reflect.Field pageField = parentClass.getDeclaredField("page");
+                    pageField.setAccessible(true);
+                    Page page = (Page) pageField.get(testClass);
+                    LoggerUtil.debug("Successfully retrieved Page object from parent class: " + parentClass.getName());
+                    return page;
+                } catch (NoSuchFieldException ex) {
+                    parentClass = parentClass.getSuperclass();
+                }
+            }
+            LoggerUtil.warn("Page field not found in test class or any parent class");
+        } catch (IllegalAccessException e) {
+            LoggerUtil.error("Cannot access Page field: " + e.getMessage());
         } catch (Exception e) {
-            return null;
+            LoggerUtil.error("Unexpected error getting Page field: " + e.getMessage());
         }
+        
+        return null;
     }
 
     private void captureScreenshot(Page page, String testName) {
@@ -67,17 +106,21 @@ public class TestListener implements ITestListener {
             // Create screenshots directory if it doesn't exist
             Path screenshotPath = Paths.get(SCREENSHOT_DIR);
             Files.createDirectories(screenshotPath);
+            LoggerUtil.debug("Screenshots directory ensured: " + screenshotPath.toAbsolutePath());
 
             // Create timestamp
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-            String fileName = testName + "_" + timestamp + ".png";
+            String fileName = testName + "_FAILED_" + timestamp + ".png";
             String filePath = SCREENSHOT_DIR + "/" + fileName;
 
             // Capture screenshot
             page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(filePath)));
-            LoggerUtil.info("Screenshot saved: " + filePath);
+            LoggerUtil.info("✓ Screenshot successfully saved: " + filePath);
+            LoggerUtil.info("  Absolute path: " + Paths.get(filePath).toAbsolutePath());
         } catch (IOException e) {
-            LoggerUtil.error("Failed to save screenshot: " + e.getMessage());
+            LoggerUtil.error("IOException - Failed to save screenshot: " + e.getMessage());
+        } catch (Exception e) {
+            LoggerUtil.error("Unexpected error capturing screenshot: " + e.getMessage(), e);
         }
     }
 }
