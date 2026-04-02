@@ -93,7 +93,8 @@ jobs:
             const existing = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              labels: 'auto-test-failure',
+              
+              s: 'auto-test-failure',
               state: 'open'
             });
 
@@ -118,15 +119,15 @@ jobs:
               issueNumber = created.data.number;
             }
 
-            // Optional: Assign to repository owner
-            try{
-             await github.rest.issues.addAssignees({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               issue_number: issueNumber,
-               assignees: ['copilot'] // GitHub Copilot does not have a username, this is just a placeholder
-             });
-             console.log(`Assigned issue #${issueNumber} to copilot`);
+            // Assign Copilot coding agent by adding a comment mentioning @copilot
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: '@copilot Please analyze the test failures above, identify the root cause, fix the code, and open a PR.'
+              });
+              console.log(`Requested Copilot on issue #${issueNumber}`);
             } catch (e) {
-             console.log(`Failed to assign issue #${issueNumber} to copilot: ${e.message}`);
+              console.log(`Failed to request Copilot on issue #${issueNumber}: ${e.message}`);
             }
