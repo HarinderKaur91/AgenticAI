@@ -131,12 +131,32 @@ jobs:
           github-token: ${{ secrets.COPILOT_TOKEN }}
           script: |
             const issueNumber = Number('${{ steps.issue.outputs.issue_number }}');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
 
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              body: '@copilot Please analyze the test failures above, identify the root cause, fix the code, and open a PR.'
-            });
+            // Method 1: Try direct Copilot agent assignment via API
+            try {
+              await github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
+                owner,
+                repo,
+                issue_number: issueNumber,
+                assignees: ['copilot-swe-agent[bot]']
+              });
+              console.log(`Method 1 succeeded: assigned copilot-swe-agent[bot] to issue #${issueNumber}`);
+            } catch (e1) {
+              console.log(`Method 1 failed: ${e1.message}`);
 
-            console.log(`Copilot assigned to issue #${issueNumber}`);
+              // Method 2: Post @copilot comment
+              try {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                  body: '@copilot Please analyze the test failures above, identify the root cause, fix the code, and open a PR.'
+                });
+                console.log(`Method 2 succeeded: posted @copilot comment on issue #${issueNumber}`);
+              } catch (e2) {
+                console.log(`Method 2 failed: ${e2.message}`);
+                core.setFailed(`Could not assign Copilot: ${e2.message}`);
+              }
+            }
