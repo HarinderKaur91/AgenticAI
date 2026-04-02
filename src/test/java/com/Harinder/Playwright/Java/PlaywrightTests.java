@@ -12,6 +12,7 @@ public class PlaywrightTests extends BaseTest {
     public void verifyHomePageLoads() {
         homePage.open();
         Assert.assertTrue(homePage.isHomePageVisible(), "Home page did not load properly.");
+        Assert.fail("Intentional failure to test CI pipeline");
     }
 
     @Test(priority = 2)
