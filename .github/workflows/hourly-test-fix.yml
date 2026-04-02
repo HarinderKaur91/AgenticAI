@@ -119,10 +119,14 @@ jobs:
             }
 
             // Optional: Assign to repository owner
-            // Uncomment below and replace 'your-username' with your GitHub username to auto-assign
-            // await github.rest.issues.addAssignees({
-            //   owner: context.repo.owner,
-            //   repo: context.repo.repo,
-            //   issue_number: issueNumber,
-            //   assignees: ['your-username']
-            // });
+            try{
+             await github.rest.issues.addAssignees({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               issue_number: issueNumber,
+               assignees: ['copilot'] // GitHub Copilot does not have a username, this is just a placeholder
+             });
+             console.log(`Assigned issue #${issueNumber} to copilot`);
+            } catch (e) {
+             console.log(`Failed to assign issue #${issueNumber} to copilot: ${e.message}`);
+            }
