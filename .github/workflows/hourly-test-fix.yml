@@ -93,8 +93,7 @@ jobs:
             const existing = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              
-              s: 'auto-test-failure',
+              labels: 'auto-test-failure',
               state: 'open'
             });
 
