@@ -26,7 +26,8 @@ jobs:
           cache: maven
 
       - name: Install Playwright Browsers
-        run: mvn -- exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+        shell: cmd
+        run: mvn org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
 
       - name: Run Tests
         id: run
