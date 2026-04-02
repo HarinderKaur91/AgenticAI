@@ -72,9 +72,16 @@ public class TestListener implements ITestListener {
         try {
             java.lang.reflect.Field pageField = testClass.getClass().getDeclaredField("page");
             pageField.setAccessible(true);
-            Page page = (Page) pageField.get(testClass);
-            LoggerUtil.debug("Successfully retrieved Page object from test class");
-            return page;
+            Page page = null;
+            try {
+                page = (Page) pageField.get(testClass);
+            } catch (IllegalAccessException ex) {
+                LoggerUtil.error("Cannot access Page field: " + ex.getMessage());
+            }
+            if (page != null) {
+                LoggerUtil.debug("Successfully retrieved Page object from test class");
+                return page;
+            }
         } catch (NoSuchFieldException e) {
             LoggerUtil.debug("Page field not found in direct class, trying inherited classes");
             
@@ -84,19 +91,23 @@ public class TestListener implements ITestListener {
                 try {
                     java.lang.reflect.Field pageField = parentClass.getDeclaredField("page");
                     pageField.setAccessible(true);
-                    Page page = (Page) pageField.get(testClass);
-                    LoggerUtil.debug("Successfully retrieved Page object from parent class: " + parentClass.getName());
-                    return page;
+                    Page page = null;
+                    try {
+                        page = (Page) pageField.get(testClass);
+                    } catch (IllegalAccessException ex) {
+                        LoggerUtil.error("Cannot access Page field in parent class: " + ex.getMessage());
+                        parentClass = parentClass.getSuperclass();
+                        continue;
+                    }
+                    if (page != null) {
+                        LoggerUtil.debug("Successfully retrieved Page object from parent class: " + parentClass.getName());
+                        return page;
+                    }
                 } catch (NoSuchFieldException ex) {
-                    parentClass = parentClass.getSuperclass();
-                } catch (IllegalAccessException ex) {
-                    LoggerUtil.error("Cannot access Page field in parent class: " + ex.getMessage());
                     parentClass = parentClass.getSuperclass();
                 }
             }
             LoggerUtil.warn("Page field not found in test class or any parent class");
-        } catch (IllegalAccessException e) {
-            LoggerUtil.error("Cannot access Page field: " + e.getMessage());
         } catch (Exception e) {
             LoggerUtil.error("Unexpected error getting Page field: " + e.getMessage());
         }
