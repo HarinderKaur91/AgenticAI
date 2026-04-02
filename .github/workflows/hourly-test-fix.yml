@@ -56,7 +56,8 @@ jobs:
           name: test-reports
           path: artifacts
 
-      - name: Create Issue And Assign Copilot
+      - name: Create Or Update Issue
+        id: issue
         uses: actions/github-script@v7
         with:
           script: |
@@ -118,15 +119,19 @@ jobs:
               issueNumber = created.data.number;
             }
 
-            // Assign Copilot coding agent by adding a comment mentioning @copilot
-            try {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-                body: '@copilot Please analyze the test failures above, identify the root cause, fix the code, and open a PR.'
-              });
-              console.log(`Requested Copilot on issue #${issueNumber}`);
-            } catch (e) {
-              console.log(`Failed to request Copilot on issue #${issueNumber}: ${e.message}`);
-            }
+            core.setOutput('issue_number', issueNumber);
+            console.log(`Issue #${issueNumber} ready`);
+
+      - name: Assign Copilot To Issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.COPILOT_TOKEN }}
+          script: |
+            const issueNumber = ${{ steps.issue.outputs.issue_number }};
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: '@copilot Please analyze the test failures above, identify the root cause, fix the code, and open a PR.'
+            });
+            console.log(`Assigned Copilot on issue #${issueNumber}`);
