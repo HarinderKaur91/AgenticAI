@@ -89,6 +89,9 @@ public class TestListener implements ITestListener {
                     return page;
                 } catch (NoSuchFieldException ex) {
                     parentClass = parentClass.getSuperclass();
+                } catch (IllegalAccessException ex) {
+                    LoggerUtil.error("Cannot access Page field in parent class: " + ex.getMessage());
+                    parentClass = parentClass.getSuperclass();
                 }
             }
             LoggerUtil.warn("Page field not found in test class or any parent class");
