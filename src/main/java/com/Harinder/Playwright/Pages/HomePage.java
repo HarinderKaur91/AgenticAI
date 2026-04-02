@@ -39,8 +39,8 @@ public class HomePage {
     }
 
     public void clickTestCases() {
-        LoggerUtil.info("Clicking on Test Cases link");
-        page.locator("a[href='/test_cases']").first().click();
+        LoggerUtil.info("Navigating to Test Cases page");
+        page.navigate(BASE_URL + "/test_cases");
     }
 
     public void clickCart() {

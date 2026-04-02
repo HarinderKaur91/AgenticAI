@@ -51,7 +51,7 @@ public class LoginPage {
 
     public String getAccountCreatedMessage() {
         page.locator("h2[data-qa='account-created']").waitFor();
-        return page.locator("h2[data-qa='account-created']").textContent().trim();
+        return page.locator("h2[data-qa='account-created']").innerText().trim();
     }
 
     public void clickContinue() {
@@ -79,6 +79,6 @@ public class LoginPage {
 
     public String getAccountDeletedMessage() {
         page.locator("h2[data-qa='account-deleted']").waitFor();
-        return page.locator("h2[data-qa='account-deleted']").textContent().trim();
+        return page.locator("h2[data-qa='account-deleted']").innerText().trim();
     }
 }
