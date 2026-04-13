@@ -110,6 +110,7 @@ jobs:
                 labels: ['bug', 'auto-test-failure']
               });
               issueNumber = existing.data[0].number;
+              console.log(`Existing issue #${issueNumber} updated with latest failure details.`);
             } else {
               const created = await github.rest.issues.create({
                 owner: context.repo.owner,
@@ -119,10 +120,10 @@ jobs:
                 labels: ['bug', 'auto-test-failure']
               });
               issueNumber = created.data.number;
+              console.log(`New issue #${issueNumber} created with test failure details.`);
             }
 
             core.setOutput('issue_number', String(issueNumber));
-            console.log(`Issue #${issueNumber} ready`);
 
       - name: Assign Copilot To Issue
         uses: actions/github-script@v7
@@ -145,4 +146,4 @@ jobs:
               }
             });
 
-            console.log(`Copilot assigned to issue #${issueNumber}`);
+            console.log(`Copilot coding agent assigned to issue #${issueNumber}. Waiting for Copilot to analyze and open a PR.`);
