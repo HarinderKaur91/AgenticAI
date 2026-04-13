@@ -24,7 +24,7 @@ public class BaseTest {
         LoggerUtil.info("Initializing Playwright and Browser...");
         playwright = Playwright.create();
 
-        boolean headless = Boolean.parseBoolean(System.getProperty("headless", "false"));
+        boolean headless = Boolean.parseBoolean(System.getProperty("headless", "true"));
         String browserName = System.getProperty("browser", "chromium");
         LoggerUtil.info("Browser: " + browserName + " | Headless: " + headless);
 
