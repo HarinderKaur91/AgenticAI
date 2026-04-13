@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   run-tests:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     outputs:
       tests_failed: ${{ steps.run.outcome == 'failure' }}
 
@@ -26,7 +26,6 @@ jobs:
           cache: maven
 
       - name: Install Playwright Browsers
-        shell: cmd
         run: mvn org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
 
       - name: Run Tests
@@ -131,32 +130,19 @@ jobs:
           github-token: ${{ secrets.COPILOT_TOKEN }}
           script: |
             const issueNumber = Number('${{ steps.issue.outputs.issue_number }}');
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
 
-            // Method 1: Try direct Copilot agent assignment via API
-            try {
-              await github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
-                owner,
-                repo,
-                issue_number: issueNumber,
-                assignees: ['copilot-swe-agent[bot]']
-              });
-              console.log(`Method 1 succeeded: assigned copilot-swe-agent[bot] to issue #${issueNumber}`);
-            } catch (e1) {
-              console.log(`Method 1 failed: ${e1.message}`);
-
-              // Method 2: Post @copilot comment
-              try {
-                await github.rest.issues.createComment({
-                  owner,
-                  repo,
-                  issue_number: issueNumber,
-                  body: '@copilot Please analyze the test failures above, identify the root cause, fix the code, and open a PR.'
-                });
-                console.log(`Method 2 succeeded: posted @copilot comment on issue #${issueNumber}`);
-              } catch (e2) {
-                console.log(`Method 2 failed: ${e2.message}`);
-                core.setFailed(`Could not assign Copilot: ${e2.message}`);
+            await github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              assignees: ['copilot-swe-agent[bot]'],
+              agent_assignment: {
+                target_repo: `${context.repo.owner}/${context.repo.repo}`,
+                base_branch: 'main'
+              },
+              headers: {
+                'X-GitHub-Api-Version': '2022-11-28'
               }
-            }
+            });
+
+            console.log(`Copilot assigned to issue #${issueNumber}`);

@@ -1,0 +1,81 @@
+name: Auto Merge Copilot PR After Approval
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: >-
+      github.event.review.state == 'approved' &&
+      github.event.pull_request.user.login == 'copilot-swe-agent[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Merge Approved Copilot PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.COPILOT_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Get PR details to confirm it's mergeable
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+
+            if (pr.mergeable_state === 'blocked') {
+              console.log(`PR #${prNumber} is blocked (pending required checks). Will retry via auto-merge.`);
+
+              // Enable auto-merge so it merges once checks pass
+              try {
+                await github.graphql(`
+                  mutation($prId: ID!) {
+                    enablePullRequestAutoMerge(input: { pullRequestId: $prId, mergeMethod: SQUASH }) {
+                      pullRequest { number }
+                    }
+                  }
+                `, { prId: pr.node_id });
+                console.log(`Auto-merge enabled on PR #${prNumber}. Will merge when checks pass.`);
+              } catch (e) {
+                console.log(`Could not enable auto-merge: ${e.message}. Trying direct merge...`);
+              }
+              return;
+            }
+
+            if (!pr.mergeable) {
+              core.setFailed(`PR #${prNumber} is not mergeable. State: ${pr.mergeable_state}`);
+              return;
+            }
+
+            // Merge the PR using squash
+            await github.rest.pulls.merge({
+              owner,
+              repo,
+              pull_number: prNumber,
+              merge_method: 'squash',
+              commit_title: `fix: auto-merge Copilot PR #${prNumber}`,
+              commit_message: `Automatically merged after human approval.\nCloses #${pr.body?.match(/#(\d+)/)?.[1] || 'unknown'}`
+            });
+
+            console.log(`PR #${prNumber} merged successfully!`);
+
+            // Close the related issue if linked
+            const issueMatch = pr.body?.match(/#(\d+)/);
+            if (issueMatch) {
+              try {
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: Number(issueMatch[1]),
+                  state: 'closed'
+                });
+                console.log(`Closed related issue #${issueMatch[1]}`);
+              } catch (e) {
+                console.log(`Could not close issue: ${e.message}`);
+              }
+            }
