@@ -43,7 +43,9 @@ public class ProductsPage {
             productLink.click();
         } catch (PlaywrightException ex) {
             String errorMessage = ex.getMessage();
-            if (errorMessage == null || !errorMessage.contains(POINTER_INTERCEPT_ERROR)) {
+            boolean isPointerInterceptError = errorMessage != null
+                    && errorMessage.contains(POINTER_INTERCEPT_ERROR);
+            if (!isPointerInterceptError) {
                 throw ex;
             }
             productLink.focus();
