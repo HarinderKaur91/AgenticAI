@@ -11,7 +11,7 @@ public class PlaywrightTests extends BaseTest {
     @Test(priority = 1)
     public void verifyHomePageLoads() {
         homePage.open();
-        Assert.assertTrue(homePage.isHomePageVisible(), "Home page did not load properly.");
+        Assert.assertFalse(homePage.isHomePageVisible(), "Home page did not load properly.");
     }
 
     @Test(priority = 2)
