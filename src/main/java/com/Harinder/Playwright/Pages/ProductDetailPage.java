@@ -1,5 +1,7 @@
 package com.Harinder.Playwright.Pages;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.WaitForSelectorState;
 
 public class ProductDetailPage {
 
@@ -29,7 +31,9 @@ public class ProductDetailPage {
     }
 
     public void clickViewCartFromPopup() {
+        Locator viewCartLink = page.locator(".modal-content a[href='/view_cart']");
+        viewCartLink.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
         // Use force click to bypass ad overlays
-        page.locator("text=View Cart").last().click(new com.microsoft.playwright.Locator.ClickOptions().setForce(true));
+        viewCartLink.click(new Locator.ClickOptions().setForce(true));
     }
 }
