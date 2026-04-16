@@ -38,18 +38,50 @@ public class ProductsPage {
     public void openProductDetailByIndex(int index) {
         Locator viewProductLinks = page.locator("a[href*='/product_details/']");
         Locator productLink = viewProductLinks.nth(index);
+        String productDetailHref = productLink.getAttribute("href");
         productLink.scrollIntoViewIfNeeded();
         try {
             productLink.click();
         } catch (PlaywrightException ex) {
-            String errorMessage = ex.getMessage();
-            boolean isPointerInterceptError = errorMessage != null
-                    && errorMessage.contains(POINTER_INTERCEPT_ERROR);
-            if (!isPointerInterceptError) {
+            if (!isPointerInterceptError(ex)) {
                 throw ex;
             }
-            productLink.focus();
-            page.keyboard().press("Enter");
+            navigateDirectlyToProductDetail(productDetailHref);
+            return;
         }
+
+        if (page.url().contains("/product_details/")) {
+            return;
+        }
+
+        try {
+            page.waitForURL("**/product_details/*", new Page.WaitForURLOptions().setTimeout(10000));
+        } catch (PlaywrightException ex) {
+            if (!isTimeoutError(ex)) {
+                throw ex;
+            }
+            navigateDirectlyToProductDetail(productDetailHref);
+        }
+    }
+
+    private void navigateDirectlyToProductDetail(String productDetailHref) {
+        if (productDetailHref == null || productDetailHref.isBlank()) {
+            throw new PlaywrightException("Product detail link is missing href.");
+        }
+        String productDetailUrl = productDetailHref.startsWith("http")
+                ? productDetailHref
+                : "https://automationexercise.com" + productDetailHref;
+        page.navigate(productDetailUrl);
+        page.waitForURL("**/product_details/*");
+    }
+
+    private boolean isPointerInterceptError(PlaywrightException ex) {
+        String errorMessage = ex.getMessage();
+        return errorMessage != null && errorMessage.contains(POINTER_INTERCEPT_ERROR);
+    }
+
+    private boolean isTimeoutError(PlaywrightException ex) {
+        String errorMessage = ex.getMessage();
+        return errorMessage != null && errorMessage.contains("Timeout");
     }
 }
