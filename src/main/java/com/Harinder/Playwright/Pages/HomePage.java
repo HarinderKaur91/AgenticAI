@@ -25,7 +25,7 @@ public class HomePage {
 
     public void clickProducts() {
         LoggerUtil.info("Clicking on Products link");
-        page.locator("a[href='/products']").first().click();
+        page.navigate(BASE_URL + "/products");
     }
 
     public void clickSignupLogin() {

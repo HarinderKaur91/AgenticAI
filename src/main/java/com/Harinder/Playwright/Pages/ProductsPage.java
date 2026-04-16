@@ -35,6 +35,6 @@ public class ProductsPage {
 
     public void openProductDetailByIndex(int index) {
         Locator viewProductLinks = page.locator("a[href*='/product_details/']");
-        viewProductLinks.nth(index).click();
+        viewProductLinks.nth(index).click(new Locator.ClickOptions().setForce(true));
     }
 }

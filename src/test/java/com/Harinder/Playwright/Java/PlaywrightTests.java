@@ -7,11 +7,10 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class PlaywrightTests extends BaseTest {
-//added comment
     @Test(priority = 1)
     public void verifyHomePageLoads() {
         homePage.open();
-        Assert.assertFalse(homePage.isHomePageVisible(), "Home page did not load properly.");
+        Assert.assertTrue(homePage.isHomePageVisible(), "Home page did not load properly.");
     }
 
     @Test(priority = 2)
