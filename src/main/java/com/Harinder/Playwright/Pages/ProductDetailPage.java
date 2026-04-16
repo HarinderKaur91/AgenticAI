@@ -34,6 +34,6 @@ public class ProductDetailPage {
         Locator viewCartLink = page.locator(".modal-content a[href='/view_cart']");
         viewCartLink.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
         // Use force click to bypass ad overlays
-        viewCartLink.first().click(new Locator.ClickOptions().setForce(true));
+        viewCartLink.click(new Locator.ClickOptions().setForce(true));
     }
 }
