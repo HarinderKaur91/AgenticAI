@@ -1,6 +1,7 @@
 package com.Harinder.Playwright.Pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
 
 public class ProductsPage {
 
@@ -35,6 +36,16 @@ public class ProductsPage {
 
     public void openProductDetailByIndex(int index) {
         Locator viewProductLinks = page.locator("a[href*='/product_details/']");
-        viewProductLinks.nth(index).click(new Locator.ClickOptions().setForce(true));
+        Locator productLink = viewProductLinks.nth(index);
+        productLink.scrollIntoViewIfNeeded();
+        try {
+            productLink.click();
+        } catch (PlaywrightException ex) {
+            if (!ex.getMessage().contains("intercepts pointer events")) {
+                throw ex;
+            }
+            productLink.focus();
+            page.keyboard().press("Enter");
+        }
     }
 }
