@@ -6,6 +6,7 @@ import com.microsoft.playwright.PlaywrightException;
 public class ProductsPage {
 
     private final Page page;
+    private static final String POINTER_INTERCEPT_ERROR = "intercepts pointer events";
 
     public ProductsPage(Page page) {
         this.page = page;
@@ -41,7 +42,8 @@ public class ProductsPage {
         try {
             productLink.click();
         } catch (PlaywrightException ex) {
-            if (!ex.getMessage().contains("intercepts pointer events")) {
+            String errorMessage = ex.getMessage();
+            if (errorMessage == null || !errorMessage.contains(POINTER_INTERCEPT_ERROR)) {
                 throw ex;
             }
             productLink.focus();
