@@ -1,4 +1,5 @@
 package com.Harinder.Playwright.Pages;
+import com.Harinder.Playwright.Utils.LoggerUtil;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.PlaywrightException;
@@ -6,7 +7,9 @@ import com.microsoft.playwright.PlaywrightException;
 public class ProductsPage {
 
     private final Page page;
+    private static final String BASE_URL = "https://automationexercise.com";
     private static final String POINTER_INTERCEPT_ERROR = "intercepts pointer events";
+    private static final int PRODUCT_DETAIL_NAVIGATION_TIMEOUT_MS = 10000;
 
     public ProductsPage(Page page) {
         this.page = page;
@@ -38,18 +41,50 @@ public class ProductsPage {
     public void openProductDetailByIndex(int index) {
         Locator viewProductLinks = page.locator("a[href*='/product_details/']");
         Locator productLink = viewProductLinks.nth(index);
+        productLink.waitFor();
         productLink.scrollIntoViewIfNeeded();
         try {
             productLink.click();
         } catch (PlaywrightException ex) {
-            String errorMessage = ex.getMessage();
-            boolean isPointerInterceptError = errorMessage != null
-                    && errorMessage.contains(POINTER_INTERCEPT_ERROR);
-            if (!isPointerInterceptError) {
+            if (!isPointerInterceptError(ex)) {
                 throw ex;
             }
-            productLink.focus();
-            page.keyboard().press("Enter");
+            navigateDirectlyToProductDetail(resolveProductDetailHref(productLink));
+            return;
         }
+
+        if (page.url().contains("/product_details/")) {
+            return;
+        }
+
+        try {
+            page.waitForURL("**/product_details/*", new Page.WaitForURLOptions()
+                    .setTimeout(PRODUCT_DETAIL_NAVIGATION_TIMEOUT_MS));
+        } catch (PlaywrightException ex) {
+            LoggerUtil.warn("Product detail URL did not load after click; using direct navigation fallback.");
+            navigateDirectlyToProductDetail(resolveProductDetailHref(productLink));
+        }
+    }
+
+    private String resolveProductDetailHref(Locator productLink) {
+        String productDetailHref = productLink.getAttribute("href");
+        if (productDetailHref == null || productDetailHref.isBlank()) {
+            throw new PlaywrightException("Product detail link is missing href.");
+        }
+        return productDetailHref;
+    }
+
+    private void navigateDirectlyToProductDetail(String productDetailHref) {
+        String productDetailUrl = productDetailHref.startsWith("http")
+                ? productDetailHref
+                : BASE_URL + productDetailHref;
+        page.navigate(productDetailUrl);
+        page.waitForURL("**/product_details/*", new Page.WaitForURLOptions()
+                .setTimeout(PRODUCT_DETAIL_NAVIGATION_TIMEOUT_MS));
+    }
+
+    private boolean isPointerInterceptError(PlaywrightException ex) {
+        String errorMessage = ex.getMessage();
+        return errorMessage != null && errorMessage.contains(POINTER_INTERCEPT_ERROR);
     }
 }
