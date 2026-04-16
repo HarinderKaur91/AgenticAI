@@ -14,6 +14,8 @@ jobs:
       github.event.review.state == 'approved' &&
       contains(fromJSON('["copilot-swe-agent[bot]","copilot[bot]","github-copilot[bot]","copilot"]'), github.event.pull_request.user.login)
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Merge Approved Copilot PR
@@ -25,8 +27,13 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            // Get PR details to confirm it's mergeable
-            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+            // Helper: wait for a given number of seconds
+            function sleep(seconds) {
+              return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+            }
+
+            // Get PR details
+            let { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
 
             // If the PR is still a draft, mark it as ready for review
             if (pr.draft) {
@@ -38,17 +45,28 @@ jobs:
                   }
                 }
               `, { prId: pr.node_id });
-              console.log(`PR #${prNumber} marked as ready for review.`);
+              console.log(`PR #${prNumber} marked as ready. Waiting for GitHub to update state...`);
 
-              // Re-fetch PR to get updated mergeable state
-              const { data: updatedPr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
-              Object.assign(pr, updatedPr);
+              // Wait and re-fetch until it's no longer a draft (max 60s)
+              for (let i = 0; i < 6; i++) {
+                await sleep(10);
+                const { data: updated } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+                if (!updated.draft) {
+                  pr = updated;
+                  console.log(`PR #${prNumber} is now ready for review.`);
+                  break;
+                }
+                console.log(`Still draft, retrying... (${(i + 1) * 10}s)`);
+              }
+
+              if (pr.draft) {
+                core.setFailed(`PR #${prNumber} is still a draft after waiting. Please mark it ready manually.`);
+                return;
+              }
             }
 
             if (pr.mergeable_state === 'blocked') {
-              console.log(`PR #${prNumber} is blocked (pending required checks). Will retry via auto-merge.`);
-
-              // Enable auto-merge so it merges once checks pass
+              console.log(`PR #${prNumber} is blocked (pending required checks). Enabling auto-merge...`);
               try {
                 await github.graphql(`
                   mutation($prId: ID!) {
@@ -59,9 +77,22 @@ jobs:
                 `, { prId: pr.node_id });
                 console.log(`Auto-merge enabled on PR #${prNumber}. Will merge when checks pass.`);
               } catch (e) {
-                console.log(`Could not enable auto-merge: ${e.message}. Trying direct merge...`);
+                console.log(`Could not enable auto-merge: ${e.message}`);
               }
               return;
+            }
+
+            // Wait for mergeable state if unknown
+            if (pr.mergeable === null) {
+              console.log(`Mergeable state unknown, waiting...`);
+              for (let i = 0; i < 6; i++) {
+                await sleep(10);
+                const { data: updated } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+                if (updated.mergeable !== null) {
+                  pr = updated;
+                  break;
+                }
+              }
             }
 
             if (!pr.mergeable) {
