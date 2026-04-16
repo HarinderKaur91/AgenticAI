@@ -1,9 +1,19 @@
 name: Hourly Test And Auto Fix
 
+run-name: >-
+  ${{ github.event.inputs.rerun_count != '' && github.event.inputs.rerun_count != '0'
+      && format('Rerun {0} - Verify Fix', github.event.inputs.rerun_count)
+      || 'Hourly Test And Auto Fix' }}
+
 on:
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
+    inputs:
+      rerun_count:
+        description: 'Rerun attempt number'
+        required: false
+        default: '0'
 
 permissions:
   contents: write
