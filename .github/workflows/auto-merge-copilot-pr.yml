@@ -28,6 +28,23 @@ jobs:
             // Get PR details to confirm it's mergeable
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
 
+            // If the PR is still a draft, mark it as ready for review
+            if (pr.draft) {
+              console.log(`PR #${prNumber} is a draft. Marking as ready for review...`);
+              await github.graphql(`
+                mutation($prId: ID!) {
+                  markPullRequestReadyForReview(input: { pullRequestId: $prId }) {
+                    pullRequest { number }
+                  }
+                }
+              `, { prId: pr.node_id });
+              console.log(`PR #${prNumber} marked as ready for review.`);
+
+              // Re-fetch PR to get updated mergeable state
+              const { data: updatedPr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+              Object.assign(pr, updatedPr);
+            }
+
             if (pr.mergeable_state === 'blocked') {
               console.log(`PR #${prNumber} is blocked (pending required checks). Will retry via auto-merge.`);
 

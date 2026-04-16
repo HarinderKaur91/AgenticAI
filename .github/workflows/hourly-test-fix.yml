@@ -2,7 +2,7 @@ name: Hourly Test And Auto Fix
 
 on:
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -41,6 +41,7 @@ jobs:
           path: |
             target/surefire-reports/**
             test-output/**
+            reports/**
 
   open-issue-and-assign-copilot:
     needs: run-tests
