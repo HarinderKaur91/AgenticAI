@@ -144,8 +144,7 @@ public class PlaywrightTests extends BaseTest {
         loginPage.clickLogout();
         Assert.assertTrue(loginPage.isLoginPageVisible(), "User is not navigated back to login page after logout.");
 
-        // BUG: Using wrong password to re-login — should use the original password
-        loginPage.login(email, "wrongPassword123!");
+        loginPage.login(email, password);
         Assert.assertTrue(loginPage.isLoggedInAsVisible(name), "User could not log in again.");
 
         loginPage.clickDeleteAccount();
@@ -198,8 +197,7 @@ public class PlaywrightTests extends BaseTest {
         homePage.clickCart();
 
         Assert.assertTrue(cartPage.isCartPageVisible(), "Cart page not visible after re-navigation.");
-        // BUG: Set quantity to 3 but asserts it should be 5
-        Assert.assertEquals(cartPage.getQuantityByRow(0), "5",
+        Assert.assertEquals(cartPage.getQuantityByRow(0), "3",
                 "Quantity should persist after navigation.");
     }
 
