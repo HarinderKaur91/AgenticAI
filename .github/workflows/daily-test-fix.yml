@@ -243,6 +243,9 @@ jobs:
               }
             }
 
+            // Close any existing open auto-test-failure issues so a fresh issue
+            // triggers a new Copilot agent session (re-assigning the same issue
+            // does NOT start a new session).
             const existing = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -250,30 +253,32 @@ jobs:
               state: 'open'
             });
 
-            let issueNumber;
-
-            if (existing.data.length > 0) {
+            for (const old of existing.data) {
               await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: existing.data[0].number,
-                title: 'Test failures detected',
-                body,
-                labels: ['bug', 'auto-test-failure']
+                issue_number: old.number,
+                state: 'closed'
               });
-              issueNumber = existing.data[0].number;
-              console.log(`Existing issue #${issueNumber} updated with latest failure details.`);
-            } else {
-              const created = await github.rest.issues.create({
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: 'Test failures detected',
-                body,
-                labels: ['bug', 'auto-test-failure']
+                issue_number: old.number,
+                body: `Closing in favour of a new issue — test failures still present. New workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
               });
-              issueNumber = created.data.number;
-              console.log(`New issue #${issueNumber} created with test failure details.`);
+              console.log(`Closed stale issue #${old.number}`);
             }
+
+            // Always create a fresh issue so Copilot agent gets a new assignment
+            const created = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Test failures detected',
+              body,
+              labels: ['bug', 'auto-test-failure']
+            });
+            const issueNumber = created.data.number;
+            console.log(`New issue #${issueNumber} created with test failure details.`);
 
             core.setOutput('issue_number', String(issueNumber));
 
