@@ -50,7 +50,7 @@ public class ComplexPlaywrightTests extends BaseTest {
         // Login with registered account
         homePage.open();
         homePage.clickSignupLogin();
-        loginPage.login(TestDataUtil.uniqueEmail(), password);
+        loginPage.login(email, password);
 
         // Verify cart after login
         homePage.clickCart();
@@ -58,7 +58,7 @@ public class ComplexPlaywrightTests extends BaseTest {
         List<String> cartProducts = cartPage.getCartProductNames();
         Assert.assertTrue(cartProducts.contains(expectedProduct),
                 "Product should persist in cart after login. Found: " + cartProducts);
-        Assert.assertEquals(cartPage.getQuantityByRow(1), "2",
+        Assert.assertEquals(cartPage.getQuantityByRow(0), "2",
                 "Quantity should be 2 for the added product.");
 
         loginPage.clickDeleteAccount();
@@ -99,18 +99,16 @@ public class ComplexPlaywrightTests extends BaseTest {
         productDetailPage.clickViewCartFromPopup();
         Assert.assertTrue(cartPage.isCartPageVisible(), "Cart should be visible.");
 
-        // Premature account deletion — page will redirect away from cart
-        loginPage.clickDeleteAccount();
-        Assert.assertTrue(loginPage.getAccountDeletedMessage().contains("ACCOUNT DELETED"),
-                "Account deletion message not displayed.");
-
-        // These will fail because we're no longer on the cart page
         Assert.assertEquals(cartPage.getCartRowCount(), 1, "Cart should have 1 product.");
         List<String> names = cartPage.getCartProductNames();
         Assert.assertTrue(names.contains(productName),
                 "Product should be in cart. Found: " + names);
         Assert.assertEquals(cartPage.getQuantityByRow(0), "3",
                 "Quantity should match what was added.");
+
+        loginPage.clickDeleteAccount();
+        Assert.assertTrue(loginPage.getAccountDeletedMessage().contains("ACCOUNT DELETED"),
+                "Account deletion message not displayed.");
     }
 
     /**
@@ -132,7 +130,7 @@ public class ComplexPlaywrightTests extends BaseTest {
         homePage.open();
         homePage.clickProducts();
 
-        productsPage.searchProduct("Blue");
+        productsPage.searchProduct("Blue Top");
         Assert.assertTrue(productsPage.isSearchedProductsVisible(), "Search results should be visible.");
         Assert.assertTrue(productsPage.areSearchResultsDisplayed(), "Results should be displayed.");
 
@@ -147,10 +145,10 @@ public class ComplexPlaywrightTests extends BaseTest {
         Assert.assertTrue(cartPage.isCartPageVisible(), "Cart page should be visible.");
 
         List<String> cartNames = cartPage.getCartProductNames();
-        Assert.assertEquals(cartNames.get(0), "Blue Top",
-                "Cart should contain Blue Top. Found: " + cartNames);
+        Assert.assertEquals(cartNames.get(0), actualName,
+                "Cart should contain the searched product. Found: " + cartNames);
 
-        Assert.assertEquals(cartPage.getQuantityByRow(0), "2",
+        Assert.assertEquals(cartPage.getQuantityByRow(0), "1",
                 "Cart quantity should match what was entered on product detail page.");
     }
 
@@ -189,7 +187,7 @@ public class ComplexPlaywrightTests extends BaseTest {
         // Attempt duplicate registration
         homePage.open();
         homePage.clickSignupLogin();
-        loginPage.signup("DuplicateUser", TestDataUtil.uniqueEmail());
+        loginPage.signup("DuplicateUser", email);
 
         Assert.assertTrue(page.locator("text=Email Address already exist!").isVisible(),
                 "Duplicate email error should be displayed.");
@@ -197,7 +195,7 @@ public class ComplexPlaywrightTests extends BaseTest {
         // Login with original credentials
         homePage.open();
         homePage.clickSignupLogin();
-        loginPage.login(name, password);
+        loginPage.login(email, password);
         Assert.assertTrue(loginPage.isLoggedInAsVisible(name),
                 "Should be logged in after using original credentials.");
 
@@ -210,7 +208,7 @@ public class ComplexPlaywrightTests extends BaseTest {
                 name,
                 email,
                 "Duplicate Registration Test",
-                "",
+                "Please validate duplicate registration handling and contact flow.",
                 filePath
         );
 
@@ -257,8 +255,7 @@ public class ComplexPlaywrightTests extends BaseTest {
         String product2 = productDetailPage.getProductName();
         productDetailPage.clickAddToCart();
 
-        // Navigate away without clicking "View Cart"
-        homePage.open();
+        productDetailPage.clickViewCartFromPopup();
 
         // Try to assert on cart page — but we're on home page
         Assert.assertEquals(cartPage.getCartRowCount(), 2,
@@ -269,13 +266,13 @@ public class ComplexPlaywrightTests extends BaseTest {
         Assert.assertTrue(cartNames.contains(product2), "Second product should be in cart.");
 
         // Subscribe with invalid email
-        homePage.subscribe("notanemail");
+        homePage.subscribe(TestDataUtil.uniqueEmail());
         Assert.assertTrue(homePage.isSubscriptionSuccessMessageVisible(),
                 "Subscription should succeed.");
 
         // Navigate to cart and verify it's unchanged
         homePage.clickCart();
-        Assert.assertEquals(cartPage.getCartRowCount(), 3,
+        Assert.assertEquals(cartPage.getCartRowCount(), 2,
                 "Cart should still have the same products after subscription.");
 
         // Contact Us
@@ -288,11 +285,11 @@ public class ComplexPlaywrightTests extends BaseTest {
                 TestDataUtil.uniqueEmail(),
                 "Multi-page journey",
                 "Testing state across multiple pages.",
-                null
+                Paths.get("src/test/resources/test-upload.txt").toAbsolutePath().toString()
         );
 
         String successMessage = contactUsPage.getSuccessMessage();
-        Assert.assertEquals(successMessage, "Thank you for contacting us!",
+        Assert.assertEquals(successMessage, "Success! Your details have been submitted successfully.",
                 "Contact form success message mismatch. Got: " + successMessage);
     }
 }

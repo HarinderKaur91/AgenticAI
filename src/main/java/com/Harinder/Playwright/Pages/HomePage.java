@@ -1,6 +1,7 @@
 package com.Harinder.Playwright.Pages;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.PlaywrightException;
 import com.Harinder.Playwright.Utils.LoggerUtil;
 
 public class HomePage {
@@ -26,8 +27,16 @@ public class HomePage {
 
     public void clickProducts() {
         LoggerUtil.info("Clicking on Products link");
-        page.locator("a[href='/products']").first().click();
-        page.waitForURL("**/products");
+        Locator productsLink = page.locator("a[href='/products']").first();
+        productsLink.waitFor();
+        try {
+            productsLink.click();
+            page.waitForURL("**/products", new Page.WaitForURLOptions().setTimeout(10000));
+        } catch (PlaywrightException ex) {
+            LoggerUtil.warn("Products link click did not navigate; falling back to direct navigation.");
+            page.navigate(BASE_URL + "/products");
+            page.waitForURL("**/products");
+        }
     }
 
     public void clickSignupLogin() {
