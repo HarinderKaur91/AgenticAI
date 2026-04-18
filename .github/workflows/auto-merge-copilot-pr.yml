@@ -139,7 +139,7 @@ jobs:
             const { data: runs } = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'hourly-test-fix.yml',
+              workflow_id: 'daily-test-fix.yml',
               per_page: 10
             });
 
@@ -156,7 +156,8 @@ jobs:
             }
             rerunCount++;
 
-            const MAX_RERUNS = 2;
+            const 
+            RERUNS = 2;
             if (rerunCount > MAX_RERUNS) {
               console.log(`Rerun limit reached (${MAX_RERUNS}). Skipping further reruns.`);
               return;
@@ -165,7 +166,7 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'hourly-test-fix.yml',
+              workflow_id: 'daily-test-fix.yml',
               ref: 'main',
               inputs: {
                 rerun_count: String(rerunCount)

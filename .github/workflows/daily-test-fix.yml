@@ -65,7 +65,8 @@ jobs:
 
       - name: Save test outcome
         if: always()
-        run: echo "Test outcome: ${{ steps.run.outcome }}" > test-outcome.txt
+        run: |
+          echo "Test outcome: ${{ steps.run.outcome }}" > test-outcome.txt
 
       - name: Upload Reports
         if: always()
