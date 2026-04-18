@@ -90,50 +90,47 @@ jobs:
 
   report-success:
     needs: run-tests
-    if: needs.run-tests.outputs.tests_failed != 'true' && github.event.inputs.rerun_count != '' && github.event.inputs.rerun_count != '0'
+    if: needs.run-tests.outputs.tests_failed != 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: All Tests Passed - No Rerun Required
+      - name: All Tests Passed
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.COPILOT_TOKEN }}
           script: |
-            const rerunCount = '${{ github.event.inputs.rerun_count }}';
-            console.log(`✅ All tests passed on Rerun ${rerunCount}! No further reruns required.`);
-            console.log('The Copilot fix has been verified successfully.');
+            const rerunCount = '${{ github.event.inputs.rerun_count }}' || '0';
+            const isRerun = rerunCount !== '0' && rerunCount !== '';
 
-            // Close the auto-test-failure issue if open
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: 'auto-test-failure',
-              state: 'open'
-            });
+            if (isRerun) {
+              console.log(`✅ All tests passed on Rerun ${rerunCount}! No further reruns required.`);
+              console.log('The Copilot fix has been verified successfully.');
 
-            for (const issue of issues) {
-              await github.rest.issues.update({
+              // Close the auto-test-failure issue if open
+              const { data: issues } = await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: issue.number,
-                state: 'closed'
+                labels: 'auto-test-failure',
+                state: 'open'
               });
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                body: `✅ **All tests passed on Rerun ${rerunCount}.** The fix has been verified. Closing this issue.`
-              });
-              console.log(`Closed issue #${issue.number} - fix verified.`);
+
+              for (const issue of issues) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed'
+                });
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `✅ **All tests passed on Rerun ${rerunCount}.** The fix has been verified. Closing this issue.`
+                });
+                console.log(`Closed issue #${issue.number} - fix verified.`);
+              }
+            } else {
+              console.log('✅ All tests passed! No issues to report. No rerun required.');
             }
-
-  report-no-rerun:
-    needs: run-tests
-    if: needs.run-tests.outputs.tests_failed != 'true' && (github.event.inputs.rerun_count == '' || github.event.inputs.rerun_count == '0')
-    runs-on: ubuntu-latest
-    steps:
-      - name: All Tests Passed
-        run: |
-          echo "✅ All tests passed! No issues to report. No rerun required."
 
   open-issue-and-assign-copilot:
     needs: run-tests

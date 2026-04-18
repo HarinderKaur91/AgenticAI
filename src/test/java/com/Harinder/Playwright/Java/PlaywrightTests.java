@@ -289,4 +289,204 @@ public class PlaywrightTests extends BaseTest {
         Assert.assertFalse(homePage.isSubscriptionSuccessMessageVisible(),
                 "Subscription should not succeed for empty email.");
     }
+
+    // ══════════════════════════════════════════════════════════
+    // COMPLEX SCENARIOS — multi-page flows with subtle bugs
+    // ══════════════════════════════════════════════════════════
+
+    @Test(priority = 19)
+    public void verifyRegisterAddProductsAndVerifyCartPersistsAfterLogin() {
+        // Flow: Register → Logout → Add product to cart as guest → Login → Verify cart still has the product
+        String name = TestDataUtil.uniqueName();
+        String email = TestDataUtil.uniqueEmail();
+        String password = TestDataUtil.password();
+
+        // Step 1: Register a new user
+        homePage.open();
+        homePage.clickSignupLogin();
+        loginPage.signup(name, email);
+        loginPage.fillAccountInformation(password);
+        loginPage.clickCreateAccount();
+        Assert.assertTrue(loginPage.getAccountCreatedMessage().contains("ACCOUNT CREATED"),
+                "Account should be created.");
+        loginPage.clickContinue();
+
+        // Step 2: Logout
+        loginPage.clickLogout();
+
+        // Step 3: Add a product to cart as guest
+        homePage.open();
+        homePage.clickProducts();
+        productsPage.openProductDetailByIndex(0);
+        String expectedProduct = productDetailPage.getProductName();
+        productDetailPage.setQuantity("2");
+        productDetailPage.clickAddToCart();
+        productDetailPage.clickViewCartFromPopup();
+        Assert.assertTrue(cartPage.isCartPageVisible(), "Cart page should be visible.");
+
+        // Step 4: Now login with the registered user
+        homePage.open();
+        homePage.clickSignupLogin();
+        // BUG: Using wrong email variable — uses a NEW unique email instead of the one registered above
+        loginPage.login(TestDataUtil.uniqueEmail(), password);
+
+        // Step 5: Navigate to cart and verify product is still there
+        homePage.clickCart();
+        Assert.assertTrue(cartPage.isCartPageVisible(), "Cart should be visible after login.");
+        List<String> cartProducts = cartPage.getCartProductNames();
+        Assert.assertTrue(cartProducts.contains(expectedProduct),
+                "Product added as guest should persist after login. Cart has: " + cartProducts);
+
+        // Cleanup: delete account
+        loginPage.clickDeleteAccount();
+    }
+
+    @Test(priority = 20)
+    public void verifySearchAddToCartAndCrossCheckProductDetails() {
+        // Flow: Search "Dress" → open result → get name → add to cart → go to cart → verify name matches
+        homePage.open();
+        homePage.clickProducts();
+
+        productsPage.searchProduct("Dress");
+        Assert.assertTrue(productsPage.isSearchedProductsVisible(), "Search results heading not visible.");
+        Assert.assertTrue(productsPage.areSearchResultsDisplayed(), "No search results for 'Dress'.");
+
+        // Open first search result and capture its name
+        productsPage.openProductDetailByIndex(0);
+        Assert.assertTrue(productDetailPage.isProductDetailVisible(), "Product detail not visible.");
+        String expectedName = productDetailPage.getProductName();
+
+        productDetailPage.setQuantity("1");
+        productDetailPage.clickAddToCart();
+        productDetailPage.clickViewCartFromPopup();
+
+        Assert.assertTrue(cartPage.isCartPageVisible(), "Cart page not visible.");
+
+        // BUG: Asserts cart has exactly 3 rows, but we only added 1 product
+        Assert.assertEquals(cartPage.getCartRowCount(), 3,
+                "Cart should have the correct number of products.");
+
+        List<String> cartNames = cartPage.getCartProductNames();
+        // BUG: Compares with a hardcoded wrong name instead of the dynamic expectedName
+        Assert.assertTrue(cartNames.contains("Fancy Green Top"),
+                "Cart should contain the searched product. Found: " + cartNames);
+    }
+
+    @Test(priority = 21)
+    public void verifyDuplicateRegistrationShowsError() {
+        // Flow: Register user → Logout → Try to signup again with SAME email → Should show error
+        String name = TestDataUtil.uniqueName();
+        String email = TestDataUtil.uniqueEmail();
+        String password = TestDataUtil.password();
+
+        // Register first time
+        homePage.open();
+        homePage.clickSignupLogin();
+        loginPage.signup(name, email);
+        loginPage.fillAccountInformation(password);
+        loginPage.clickCreateAccount();
+        Assert.assertTrue(loginPage.getAccountCreatedMessage().contains("ACCOUNT CREATED"),
+                "First registration should succeed.");
+        loginPage.clickContinue();
+        loginPage.clickLogout();
+
+        // Try to register again with the same email
+        homePage.open();
+        homePage.clickSignupLogin();
+        // BUG: Uses TestDataUtil.uniqueEmail() which generates a NEW email each time
+        // So this will succeed instead of showing the "Email Address already exist!" error
+        loginPage.signup("DuplicateUser", TestDataUtil.uniqueEmail());
+
+        // This assertion expects an error that will never appear because the email is unique
+        Assert.assertTrue(page.locator("text=Email Address already exist!").isVisible(),
+                "Should show duplicate email error but signup succeeded with a different email.");
+    }
+
+    @Test(priority = 22)
+    public void verifyFullCheckoutFlowWithQuantityAndAccountCleanup() {
+        // Flow: Register → Add product with qty 3 → Cart → Verify qty → Logout → Login → Verify cart → Delete account
+        String name = TestDataUtil.uniqueName();
+        String email = TestDataUtil.uniqueEmail();
+        String password = TestDataUtil.password();
+
+        // Register
+        homePage.open();
+        homePage.clickSignupLogin();
+        loginPage.signup(name, email);
+        loginPage.fillAccountInformation(password);
+        loginPage.clickCreateAccount();
+        loginPage.clickContinue();
+        Assert.assertTrue(loginPage.isLoggedInAsVisible(name), "Should be logged in after registration.");
+
+        // Add product with quantity 3
+        homePage.clickProducts();
+        productsPage.openProductDetailByIndex(0);
+        String productName = productDetailPage.getProductName();
+        productDetailPage.setQuantity("3");
+        productDetailPage.clickAddToCart();
+        productDetailPage.clickViewCartFromPopup();
+
+        Assert.assertTrue(cartPage.isCartPageVisible(), "Cart should be visible.");
+        Assert.assertEquals(cartPage.getCartRowCount(), 1, "Cart should have 1 product row.");
+        // BUG: Set quantity to "3" but asserts "1" — wrong expected value
+        Assert.assertEquals(cartPage.getQuantityByRow(0), "1",
+                "Quantity in cart should match what was set on product detail page.");
+
+        // Logout and login again
+        homePage.open();
+        loginPage.clickLogout();
+        homePage.clickSignupLogin();
+        loginPage.login(email, password);
+        Assert.assertTrue(loginPage.isLoggedInAsVisible(name), "Should be logged in after re-login.");
+
+        // BUG: Navigates to home but never clicks cart — then asserts cart product name
+        homePage.open();
+        List<String> cartNames = cartPage.getCartProductNames();
+        Assert.assertTrue(cartNames.contains(productName),
+                "Product should still be in cart after re-login. Found: " + cartNames);
+
+        // Cleanup
+        loginPage.clickDeleteAccount();
+        Assert.assertTrue(loginPage.getAccountDeletedMessage().contains("ACCOUNT DELETED"),
+                "Account deletion message not shown.");
+    }
+
+    @Test(priority = 23)
+    public void verifyContactUsAfterNavigatingMultiplePages() {
+        // Flow: Home → Products → Search → Product Detail → Home → Contact Us → Submit → Verify
+        homePage.open();
+
+        // Navigate through several pages first
+        homePage.clickProducts();
+        Assert.assertTrue(productsPage.isProductsPageVisible(), "Products page not visible.");
+        productsPage.searchProduct("Top");
+        Assert.assertTrue(productsPage.areSearchResultsDisplayed(), "Search results not displayed.");
+        productsPage.openProductDetailByIndex(0);
+        Assert.assertTrue(productDetailPage.isProductDetailVisible(), "Product detail not visible.");
+
+        // Now navigate to Contact Us
+        homePage.open();
+        homePage.clickContactUs();
+        Assert.assertTrue(contactUsPage.isContactUsPageVisible(), "Contact Us page not visible.");
+
+        String filePath = Paths.get("src/test/resources/test-upload.txt").toAbsolutePath().toString();
+
+        contactUsPage.submitContactForm(
+                "TestUser",
+                TestDataUtil.uniqueEmail(),
+                "Multi-page navigation test",
+                "Verifying contact us works after browsing multiple pages.",
+                filePath
+        );
+
+        String successMessage = contactUsPage.getSuccessMessage();
+        // BUG: Wrong assertion — checks for "Contact Form Submitted" instead of the real message
+        Assert.assertEquals(successMessage, "Contact Form Submitted",
+                "Contact form success message does not match. Got: " + successMessage);
+
+        // BUG: Then navigates to home and asserts subscription message is visible (it shouldn't be — never subscribed)
+        homePage.open();
+        Assert.assertTrue(homePage.isSubscriptionSuccessMessageVisible(),
+                "Subscription success should be visible on home page after contact form submission.");
+    }
 }
