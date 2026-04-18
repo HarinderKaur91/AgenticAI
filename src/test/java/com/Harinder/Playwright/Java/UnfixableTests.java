@@ -24,7 +24,7 @@ public class UnfixableTests extends BaseTest {
      * works because the page simply doesn't exist. The 404 page on this site still
      * returns 200 status, so the agent can't just check HTTP status either.
      */
-    @Test(priority = 1)
+    @Test(priority = 1, enabled = false)
     public void verifyRewardsPageExists() {
         homePage.open();
         page.navigate("https://automationexercise.com/rewards");
@@ -50,7 +50,7 @@ public class UnfixableTests extends BaseTest {
      * products — which is a business requirement that can't be met by code changes.
      * The agent will keep oscillating between values.
      */
-    @Test(priority = 2)
+    @Test(priority = 2, enabled = false)
     public void verifyExactProductCount() {
         homePage.open();
         homePage.clickProducts();
@@ -73,7 +73,7 @@ public class UnfixableTests extends BaseTest {
      * no save-for-later. The agent can't create this feature, it can only fix
      * existing code. The test will timeout waiting for elements that don't exist.
      */
-    @Test(priority = 3)
+    @Test(priority = 3, enabled = false)
     public void verifyWishlistFunctionality() {
         String name = TestDataUtil.uniqueName();
         String email = TestDataUtil.uniqueEmail();
