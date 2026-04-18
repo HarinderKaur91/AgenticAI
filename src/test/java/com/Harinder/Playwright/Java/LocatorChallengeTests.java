@@ -2,6 +2,8 @@ package com.Harinder.Playwright.Java;
 
 import com.Harinder.Playwright.Base.BaseTest;
 import com.Harinder.Playwright.Utils.TestDataUtil;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.TimeoutError;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import java.nio.file.Paths;
@@ -383,9 +385,25 @@ public class LocatorChallengeTests extends BaseTest {
         Assert.assertTrue(successMsg.contains("Success! Your details have been submitted successfully."),
                 "Contact form should succeed. Got: " + successMsg);
 
+        final String deleteAccountSelector = "a[href='/delete_account']";
         homePage.open();
-        page.locator("a[href='/delete_account']").click();
-        page.locator("h2[data-qa='account-deleted']").waitFor();
+        Locator deleteAccountLink = page.locator(deleteAccountSelector).first();
+        if (page.locator(deleteAccountSelector).count() == 0 || !deleteAccountLink.isVisible()) {
+            page.locator("a[href='/login']").first().click();
+            loginPage.login(email, password);
+            page.locator("text=Logged in as " + name).waitFor();
+            deleteAccountLink = page.locator(deleteAccountSelector).first();
+        }
+
+        deleteAccountLink.click();
+        try {
+            page.locator("h2[data-qa='account-deleted']").waitFor();
+        } catch (TimeoutError ex) {
+            homePage.open();
+            deleteAccountLink = page.locator(deleteAccountSelector).first();
+            deleteAccountLink.click();
+            page.locator("h2[data-qa='account-deleted']").waitFor();
+        }
         Assert.assertTrue(page.locator("h2[data-qa='account-deleted']").innerText().contains("ACCOUNT DELETED"),
                 "Account should be deleted.");
     }
