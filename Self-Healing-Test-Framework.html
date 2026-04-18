@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-Healing Test Framework — Agentic AI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+  }
+
+  .slide {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 100px;
+    border-bottom: 2px solid #21262d;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+  }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #58a6ff, #bc8cff, #f778ba);
+  }
+
+  .slide-number {
+    position: absolute;
+    bottom: 30px;
+    right: 50px;
+    font-size: 14px;
+    color: #484f58;
+    font-weight: 600;
+  }
+
+  /* Title Slide */
+  .title-slide {
+    text-align: center;
+    background: radial-gradient(ellipse at center, #161b22 0%, #0d1117 70%);
+  }
+  .title-slide h1 {
+    font-size: 52px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 20px;
+  }
+  .title-slide h2 {
+    font-size: 28px;
+    font-weight: 300;
+    color: #8b949e;
+    margin-bottom: 40px;
+  }
+  .title-slide .meta {
+    font-size: 16px;
+    color: #484f58;
+  }
+  .title-slide .badges {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .badge-blue { background: #1f3044; color: #58a6ff; }
+  .badge-purple { background: #2d1f44; color: #bc8cff; }
+  .badge-green { background: #1a3028; color: #3fb950; }
+  .badge-orange { background: #3d2a14; color: #d29922; }
+
+  h2.slide-title {
+    font-size: 38px;
+    font-weight: 700;
+    margin-bottom: 40px;
+    color: #58a6ff;
+  }
+
+  h3 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 20px 0 12px;
+    color: #bc8cff;
+  }
+
+  p, li {
+    font-size: 18px;
+    line-height: 1.7;
+    color: #c9d1d9;
+  }
+
+  ul { list-style: none; padding-left: 0; }
+  ul li { padding: 6px 0; }
+  ul li::before {
+    content: '▸ ';
+    color: #58a6ff;
+    font-weight: 700;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+  }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 12px;
+    padding: 24px;
+    transition: border-color 0.3s;
+  }
+  .card:hover { border-color: #58a6ff; }
+  .card h3 { margin-top: 0; }
+
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 30px 0;
+    flex-wrap: wrap;
+  }
+  .flow-box {
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    text-align: center;
+    min-width: 140px;
+  }
+  .flow-arrow {
+    font-size: 24px;
+    color: #484f58;
+  }
+  .fb-blue { background: #1f3044; color: #58a6ff; border: 1px solid #264d73; }
+  .fb-red { background: #3d1a1a; color: #f85149; border: 1px solid #6e3030; }
+  .fb-green { background: #1a3028; color: #3fb950; border: 1px solid #2a5a3a; }
+  .fb-purple { background: #2d1f44; color: #bc8cff; border: 1px solid #4a3066; }
+  .fb-orange { background: #3d2a14; color: #d29922; border: 1px solid #5c4020; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 16px;
+  }
+  th {
+    background: #161b22;
+    color: #58a6ff;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid #21262d;
+    font-weight: 600;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #21262d;
+    color: #c9d1d9;
+  }
+  tr:hover td { background: #161b22; }
+
+  code {
+    background: #1f2937;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 15px;
+    color: #f0883e;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  .code-block {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 16px 0;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #c9d1d9;
+    white-space: pre;
+  }
+
+  .highlight-box {
+    background: linear-gradient(135deg, #1f3044, #2d1f44);
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin: 30px 0;
+  }
+  .stat-box {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+  .stat-box .number {
+    font-size: 42px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-box .label {
+    font-size: 14px;
+    color: #8b949e;
+    margin-top: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 40px;
+    margin: 20px 0;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #21262d;
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -33px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #58a6ff;
+    border: 2px solid #0d1117;
+  }
+  .timeline-item .date {
+    font-size: 13px;
+    color: #484f58;
+    font-weight: 600;
+  }
+
+  @media print {
+    .slide { min-height: auto; padding: 40px 60px; }
+    body { background: white; color: #1f2328; }
+    .slide::before { display: none; }
+    h2.slide-title { color: #0969da; }
+    h3 { color: #8250df; }
+    p, li, td { color: #1f2328; }
+    .card, .stat-box, .code-block { background: #f6f8fa; border-color: #d0d7de; }
+    th { background: #f6f8fa; color: #0969da; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide title-slide">
+  <h1>Self-Healing Test Framework</h1>
+  <h2>Automated Test Failure Detection, Fix & Verification<br>using GitHub Copilot Coding Agent</h2>
+  <div class="badges">
+    <span class="badge badge-blue">Playwright Java</span>
+    <span class="badge badge-purple">GitHub Actions</span>
+    <span class="badge badge-green">Copilot Agent</span>
+    <span class="badge badge-orange">TestNG</span>
+  </div>
+  <p class="meta" style="margin-top: 40px;">Built by Harinder Kaur &nbsp;|&nbsp; April 2026</p>
+  <div class="slide-number">1</div>
+</div>
+
+<!-- SLIDE 2: Problem Statement -->
+<div class="slide">
+  <h2 class="slide-title">The Problem</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Traditional CI Workflow</h3>
+      <ul>
+        <li>Tests fail in CI → Human gets notified</li>
+        <li>Developer investigates manually</li>
+        <li>Hours or days to diagnose and fix</li>
+        <li>PR created, reviewed, merged manually</li>
+        <li>Re-run tests to verify — again manually</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>The Cost</h3>
+      <ul>
+        <li>Broken main branch blocks other PRs</li>
+        <li>Developer time wasted on flaky/simple bugs</li>
+        <li>Slow feedback loop (hours → days)</li>
+        <li>No guarantee the fix doesn't break other tests</li>
+        <li>Manual process is error-prone</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight-box" style="margin-top: 30px; text-align: center;">
+    <p style="font-size: 22px; font-weight: 600;">What if the framework could <span style="color: #3fb950;">detect, fix, and verify</span> test failures autonomously?</p>
+  </div>
+  <div class="slide-number">2</div>
+</div>
+
+<!-- SLIDE 3: Solution Overview -->
+<div class="slide">
+  <h2 class="slide-title">The Solution: Self-Healing Test Framework</h2>
+  <div class="flow-diagram">
+    <div class="flow-box fb-blue">Daily Cron<br><small>Midnight UTC</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box fb-blue">Run Full<br>Test Suite</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box fb-red">Failures<br>Detected?</div>
+  </div>
+  <div class="flow-diagram">
+    <div class="flow-box fb-red">Open GitHub<br>Issue</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box fb-purple">Assign Copilot<br>Agent</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box fb-purple">Agent Writes<br>Fix + PR</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box fb-orange">Human<br>Approves PR</div>
+  </div>
+  <div class="flow-diagram">
+    <div class="flow-box fb-green">Auto-Merge<br>to Main</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box fb-blue">Rerun Failed<br>Tests Only</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box fb-green">Verified ✓<br>Issue Closed</div>
+  </div>
+  <p style="text-align: center; margin-top: 20px; color: #8b949e;">Maximum 2 rerun cycles &nbsp;|&nbsp; Reruns only failed tests via <code>testng-failed.xml</code></p>
+  <div class="slide-number">3</div>
+</div>
+
+<!-- SLIDE 4: Tech Stack -->
+<div class="slide">
+  <h2 class="slide-title">Technology Stack</h2>
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="number" style="font-size: 28px;">☕</div>
+      <div class="label">Java 21</div>
+      <p style="font-size: 13px; margin-top: 6px;">Temurin OpenJDK</p>
+    </div>
+    <div class="stat-box">
+      <div class="number" style="font-size: 28px;">🎭</div>
+      <div class="label">Playwright 1.58</div>
+      <p style="font-size: 13px; margin-top: 6px;">Browser automation</p>
+    </div>
+    <div class="stat-box">
+      <div class="number" style="font-size: 28px;">🧪</div>
+      <div class="label">TestNG 7.12</div>
+      <p style="font-size: 13px; margin-top: 6px;">Test runner + listeners</p>
+    </div>
+    <div class="stat-box">
+      <div class="number" style="font-size: 28px;">📊</div>
+      <div class="label">ExtentReports</div>
+      <p style="font-size: 13px; margin-top: 6px;">HTML reports + screenshots</p>
+    </div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="number" style="font-size: 28px;">⚙️</div>
+      <div class="label">GitHub Actions</div>
+      <p style="font-size: 13px; margin-top: 6px;">CI/CD workflows</p>
+    </div>
+    <div class="stat-box">
+      <div class="number" style="font-size: 28px;">🤖</div>
+      <div class="label">Copilot Agent</div>
+      <p style="font-size: 13px; margin-top: 6px;">AI-powered fixes</p>
+    </div>
+    <div class="stat-box">
+      <div class="number" style="font-size: 28px;">🏗️</div>
+      <div class="label">Maven</div>
+      <p style="font-size: 13px; margin-top: 6px;">Build + Surefire plugin</p>
+    </div>
+    <div class="stat-box">
+      <div class="number" style="font-size: 28px;">🌐</div>
+      <div class="label">Ubuntu Runner</div>
+      <p style="font-size: 13px; margin-top: 6px;">Headless Chromium</p>
+    </div>
+  </div>
+  <div class="slide-number">4</div>
+</div>
+
+<!-- SLIDE 5: Project Structure -->
+<div class="slide">
+  <h2 class="slide-title">Project Structure</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Page Object Model</h3>
+      <div class="code-block">src/main/java/com/Harinder/Playwright/
+├── Base/
+│   └── BaseTest.java          ← Setup/teardown
+├── Pages/
+│   ├── HomePage.java          ← Navigation, subscribe
+│   ├── LoginPage.java         ← Signup, login, logout
+│   ├── ProductsPage.java      ← Search, browse
+│   ├── ProductDetailPage.java ← Qty, add to cart
+│   ├── CartPage.java          ← Cart verification
+│   └── ContactUsPage.java     ← Form submission
+└── Utils/
+    ├── LoggerUtil.java        ← Log4j2 logging
+    └── ExtentReportManager.java ← HTML reports</div>
+    </div>
+    <div>
+      <h3>Tests & Config</h3>
+      <div class="code-block">src/test/java/com/Harinder/Playwright/
+├── Java/
+│   ├── PlaywrightTests.java        ← 18 tests
+│   └── ComplexPlaywrightTests.java ← 5 complex
+└── Utils/
+    ├── TestListener.java      ← ExtentReport hooks
+    └── TestDataUtil.java      ← Unique emails/names
+
+.github/workflows/
+├── daily-test-fix.yml         ← Self-healing workflow
+└── auto-merge-copilot-pr.yml  ← Auto-merge + rerun
+
+testng.xml                     ← Suite configuration
+pom.xml                        ← Dependencies</div>
+    </div>
+  </div>
+  <div class="slide-number">5</div>
+</div>
+
+<!-- SLIDE 6: Workflow 1 — Daily Test & Auto Fix -->
+<div class="slide">
+  <h2 class="slide-title">Workflow 1: daily-test-fix.yml</h2>
+  <p style="margin-bottom: 20px;">Runs daily at midnight UTC or on manual dispatch. Handles both initial runs and reruns.</p>
+  
+  <div class="grid-2">
+    <div class="card">
+      <h3>Job: run-tests</h3>
+      <ul>
+        <li>Checks out code, sets up Java 21</li>
+        <li>Installs Playwright browsers</li>
+        <li>On rerun: downloads <code>testng-failed.xml</code> from previous run</li>
+        <li>Runs only failed tests (rerun) or full suite (initial)</li>
+        <li>Uploads reports + failed XML as artifacts</li>
+        <li>Outputs <code>tests_failed</code> boolean</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Job: open-issue-and-assign-copilot</h3>
+      <ul>
+        <li>Runs only IF tests failed</li>
+        <li>Downloads test report artifacts</li>
+        <li>Creates/updates GitHub issue with failure details</li>
+        <li>Labels: <code>bug</code>, <code>auto-test-failure</code></li>
+        <li>Assigns Copilot agent (tries 5 bot names)</li>
+        <li>Fallback: <code>@copilot</code> mention in comment</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 20px;">
+    <h3>Job: report-success</h3>
+    <ul>
+      <li>Runs only IF tests passed</li>
+      <li>On rerun: closes the <code>auto-test-failure</code> issue with success comment</li>
+      <li>On initial run: prints "No rerun required"</li>
+    </ul>
+  </div>
+  <div class="slide-number">6</div>
+</div>
+
+<!-- SLIDE 7: Workflow 2 — Auto Merge -->
+<div class="slide">
+  <h2 class="slide-title">Workflow 2: auto-merge-copilot-pr.yml</h2>
+  <p style="margin-bottom: 20px;">Triggered when a human approves a Copilot-authored PR. Handles merge + rerun verification.</p>
+  
+  <div class="card">
+    <h3>Step 1: Merge Approved Copilot PR</h3>
+    <ul>
+      <li>Validates PR author is a Copilot bot (<code>copilot-swe-agent[bot]</code>, etc.)</li>
+      <li>Handles draft PRs → marks ready for review with polling (60s max)</li>
+      <li>Handles blocked state → enables auto-merge via GraphQL</li>
+      <li>Waits for mergeable state if unknown</li>
+      <li>Squash merges with descriptive commit message</li>
+      <li>Auto-closes the linked issue from PR body</li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top: 20px;">
+    <h3>Step 2: Trigger Test Rerun</h3>
+    <ul>
+      <li>Counts how many reruns have happened in the last 24 hours</li>
+      <li>Dispatches <code>daily-test-fix.yml</code> with incremented <code>rerun_count</code></li>
+      <li>Maximum <strong>2 reruns</strong> to prevent infinite loops</li>
+      <li>Run title shows "Rerun 1 — Verify Fix" or "Rerun 2 — Verify Fix"</li>
+    </ul>
+  </div>
+  <div class="slide-number">7</div>
+</div>
+
+<!-- SLIDE 8: Rerun Logic Deep Dive -->
+<div class="slide">
+  <h2 class="slide-title">Smart Rerun: Failed Tests Only</h2>
+  
+  <div class="highlight-box">
+    <p style="font-size: 20px; font-weight: 600; text-align: center;">On reruns, only previously failed tests are executed using <code>testng-failed.xml</code></p>
+  </div>
+
+  <div class="grid-2" style="margin-top: 30px;">
+    <div class="card">
+      <h3>How It Works</h3>
+      <ul>
+        <li>After test run, TestNG generates <code>testng-failed.xml</code></li>
+        <li>Uploaded as artifact: <code>testng-failed-xml</code></li>
+        <li>On rerun, workflow downloads this artifact from previous run</li>
+        <li>Uses GitHub CLI: <code>gh run download</code></li>
+        <li>Maven Surefire runs with <code>-DsuiteXmlFile=testng-failed.xml</code></li>
+        <li>Fallback: if XML not found, runs full suite</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Benefits</h3>
+      <ul>
+        <li>Faster verification — skip passing tests</li>
+        <li>Focused feedback — only see relevant results</li>
+        <li>Resource efficient — less CI minutes</li>
+        <li>Clear signal — did the fix work for the broken tests?</li>
+      </ul>
+      <h3 style="margin-top: 20px;">pom.xml Config</h3>
+      <div class="code-block" style="font-size: 13px;">&lt;properties&gt;
+  &lt;suiteXmlFile&gt;testng.xml&lt;/suiteXmlFile&gt;
+&lt;/properties&gt;
+...
+&lt;suiteXmlFiles&gt;
+  &lt;suiteXmlFile&gt;${suiteXmlFile}&lt;/suiteXmlFile&gt;
+&lt;/suiteXmlFiles&gt;</div>
+    </div>
+  </div>
+  <div class="slide-number">8</div>
+</div>
+
+<!-- SLIDE 9: Copilot Agent Integration -->
+<div class="slide">
+  <h2 class="slide-title">Copilot Coding Agent Integration</h2>
+  
+  <div class="grid-2">
+    <div class="card">
+      <h3>Assignment Strategy</h3>
+      <p>Tries 5 known bot names via REST API with <code>agent_assignment</code> payload:</p>
+      <div class="code-block" style="font-size: 13px;">const botNames = [
+  'copilot-swe-agent',
+  'copilot-swe-agent[bot]',
+  'copilot',
+  'copilot[bot]',
+  'github-copilot[bot]'
+];</div>
+      <p style="margin-top: 10px;">If all fail → fallback <code>@copilot</code> mention in issue comment.</p>
+    </div>
+    <div class="card">
+      <h3>What the Agent Receives</h3>
+      <ul>
+        <li>Issue title: "Test failures detected"</li>
+        <li>Full failure stack traces from Surefire reports</li>
+        <li>Links to the failed GitHub Actions run</li>
+        <li>Rerun count (if applicable)</li>
+        <li>Labels: <code>bug</code>, <code>auto-test-failure</code></li>
+      </ul>
+      <h3 style="margin-top: 16px;">What the Agent Does</h3>
+      <ul>
+        <li>Analyzes test failure logs</li>
+        <li>Reads source code to find root cause</li>
+        <li>Creates a fix PR targeting <code>main</code></li>
+        <li>Includes <code>Fixes #N</code> in PR body</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-number">9</div>
+</div>
+
+<!-- SLIDE 10: ExtentReports -->
+<div class="slide">
+  <h2 class="slide-title">Reporting: ExtentReports + Screenshots</h2>
+  
+  <div class="grid-2">
+    <div class="card">
+      <h3>ExtentReportManager.java</h3>
+      <ul>
+        <li>Thread-safe: <code>ThreadLocal&lt;ExtentTest&gt;</code></li>
+        <li>Timestamped HTML reports in <code>reports/</code> directory</li>
+        <li>Captures system info: OS, Java version, browser, headless mode</li>
+        <li>Flushed on suite completion</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>TestListener.java Integration</h3>
+      <ul>
+        <li><code>onTestStart</code>: Creates ExtentTest per method</li>
+        <li><code>onTestSuccess</code>: Logs PASS with duration</li>
+        <li><code>onTestFailure</code>: Logs FAIL + exception + Base64 screenshot</li>
+        <li><code>onTestSkipped</code>: Logs SKIP</li>
+        <li><code>onFinish</code>: Flushes report to HTML</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top: 20px;">
+    <h3 style="margin-top: 0;">Screenshot on Failure</h3>
+    <p>When a test fails, a full-page screenshot is captured as Base64 and embedded directly into the ExtentReport HTML — no external file dependencies. Reports are uploaded as GitHub Actions artifacts for download.</p>
+  </div>
+  <div class="slide-number">10</div>
+</div>
+
+<!-- SLIDE 11: Test Scenarios -->
+<div class="slide">
+  <h2 class="slide-title">Test Scenarios: 23 Tests Across 2 Files</h2>
+  
+  <h3>PlaywrightTests.java — 18 Standard Tests</h3>
+  <table>
+    <tr><th>#</th><th>Test</th><th>Coverage</th></tr>
+    <tr><td>1</td><td>verifyHomePageLoads</td><td>Home page visibility</td></tr>
+    <tr><td>2</td><td>verifyTestCasesPageNavigation</td><td>Navigation + URL check</td></tr>
+    <tr><td>3</td><td>verifyProductsPageIsVisible</td><td>Products listing</td></tr>
+    <tr><td>4</td><td>verifySearchProduct</td><td>Search functionality</td></tr>
+    <tr><td>5</td><td>verifyFirstProductDetailPage</td><td>Product detail page</td></tr>
+    <tr><td>6</td><td>verifyAddSingleProductToCart</td><td>Add to cart + verify</td></tr>
+    <tr><td>7</td><td>verifyProductQuantityInCart</td><td>Cart quantity</td></tr>
+    <tr><td>8</td><td>verifySubscriptionOnHomePage</td><td>Email subscription</td></tr>
+    <tr><td>9–10</td><td>Contact Us + Full Auth Flow</td><td>Form submission, Register/Login/Logout/Delete</td></tr>
+    <tr><td>11–18</td><td>Cart, Search, Navigation, Login</td><td>Multi-step validations</td></tr>
+  </table>
+  <div class="slide-number">11</div>
+</div>
+
+<!-- SLIDE 12: Complex Test Scenarios -->
+<div class="slide">
+  <h2 class="slide-title">ComplexPlaywrightTests.java — Agent Stress Tests</h2>
+  <p style="margin-bottom: 20px;">5 brutally complex scenarios designed to stress-test the Copilot agent's debugging ability.</p>
+
+  <table>
+    <tr><th>Test</th><th>Bug Pattern</th><th>Hidden Bugs</th><th>Difficulty</th></tr>
+    <tr>
+      <td>verifyCartPersistsAcrossLoginSession</td>
+      <td><strong>Layered</strong></td>
+      <td>Wrong login email + wrong row index (2nd bug invisible until 1st fixed)</td>
+      <td style="color: #f0883e;">★★★★</td>
+    </tr>
+    <tr>
+      <td>verifyCartContentsBeforeAccountDeletion</td>
+      <td><strong>Order-of-operations</strong></td>
+      <td>Account deleted BEFORE cart assertions — must restructure entire test</td>
+      <td style="color: #f85149;">★★★★★</td>
+    </tr>
+    <tr>
+      <td>verifySearchProductAddToCartAndValidateDetails</td>
+      <td><strong>Cascading</strong></td>
+      <td>Wrong search term cascades → wrong product → hardcoded name mismatch + qty mismatch</td>
+      <td style="color: #f0883e;">★★★★</td>
+    </tr>
+    <tr>
+      <td>verifyDuplicateRegistrationThenLoginAndContactUs</td>
+      <td><strong>3-layer sequential</strong></td>
+      <td>uniqueEmail() regenerated + name in email field + empty message body</td>
+      <td style="color: #f85149;">★★★★★</td>
+    </tr>
+    <tr>
+      <td>verifyMultiPageJourneyWithCartSubscriptionAndContactUs</td>
+      <td><strong>Cross-page state</strong></td>
+      <td>4 bugs: missing clickViewCart + invalid email + wrong count + wrong success msg</td>
+      <td style="color: #f85149;">★★★★★</td>
+    </tr>
+  </table>
+  <p style="margin-top: 16px; color: #8b949e; text-align: center;"><strong>12 hidden bugs</strong> across 5 tests — no hint comments in code</p>
+  <div class="slide-number">12</div>
+</div>
+
+<!-- SLIDE 13: Complete End-to-End Flow -->
+<div class="slide">
+  <h2 class="slide-title">End-to-End Flow: A Real Cycle</h2>
+  
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="date">12:00 AM UTC — Cron triggers</div>
+      <p><code>daily-test-fix.yml</code> runs → <code>mvn clean test</code> → 8 tests fail</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">12:05 AM — Issue created</div>
+      <p>GitHub Issue #42 opened with failure logs, labeled <code>auto-test-failure</code></p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">12:05 AM — Agent assigned</div>
+      <p><code>copilot-swe-agent[bot]</code> assigned to Issue #42</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">12:15 AM — PR created</div>
+      <p>Copilot opens PR #43 with fixes, body contains <code>Fixes #42</code></p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Next morning — Human reviews</div>
+      <p>Developer reviews PR, approves it ✓</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Seconds later — Auto-merge</div>
+      <p><code>auto-merge-copilot-pr.yml</code> triggers → squash merge → close Issue #42</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Immediately — Rerun 1</div>
+      <p>Dispatches <code>daily-test-fix.yml</code> with <code>rerun_count=1</code> → runs only failed tests</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Result</div>
+      <p style="color: #3fb950; font-weight: 600;">✅ All tests pass → Issue closed with success comment → Framework healed itself</p>
+    </div>
+  </div>
+  <div class="slide-number">13</div>
+</div>
+
+<!-- SLIDE 14: Key Design Decisions -->
+<div class="slide">
+  <h2 class="slide-title">Key Design Decisions</h2>
+  
+  <div class="grid-2">
+    <div class="card">
+      <h3>Safety Guardrails</h3>
+      <ul>
+        <li><strong>Human-in-the-loop:</strong> Agent creates PR, human must approve</li>
+        <li><strong>Max 2 reruns:</strong> Prevents infinite fix-fail loops</li>
+        <li><strong>Squash merge:</strong> Clean git history</li>
+        <li><strong>COPILOT_TOKEN secret:</strong> Scoped permissions</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Reliability</h3>
+      <ul>
+        <li><strong>Draft PR handling:</strong> markReadyForReview + polling</li>
+        <li><strong>5 bot name attempts:</strong> Handles API name changes</li>
+        <li><strong>@copilot fallback:</strong> If REST assignment fails</li>
+        <li><strong>Artifact fallback:</strong> Full suite if testng-failed.xml missing</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Efficiency</h3>
+      <ul>
+        <li><strong>Failed-only reruns:</strong> Via testng-failed.xml</li>
+        <li><strong>Issue reuse:</strong> Updates existing issue vs creating new</li>
+        <li><strong>Maven cache:</strong> Speeds up dependency resolution</li>
+        <li><strong>Headless Chromium:</strong> No GUI overhead in CI</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Observability</h3>
+      <ul>
+        <li><strong>ExtentReports:</strong> Rich HTML with screenshots</li>
+        <li><strong>Log4j2:</strong> Structured logging</li>
+        <li><strong>Surefire reports:</strong> XML + TXT artifacts</li>
+        <li><strong>Run naming:</strong> "Rerun 1 — Verify Fix"</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-number">14</div>
+</div>
+
+<!-- SLIDE 15: Challenges & Solutions -->
+<div class="slide">
+  <h2 class="slide-title">Challenges Faced & Resolved</h2>
+  
+  <table>
+    <tr><th>Challenge</th><th>Root Cause</th><th>Solution</th></tr>
+    <tr>
+      <td>YAML <code>&gt;</code> syntax error</td>
+      <td><code>echo "..." &gt; file</code> interpreted as YAML folded scalar</td>
+      <td>Used <code>run: |</code> block scalar</td>
+    </tr>
+    <tr>
+      <td>ExtentReportManager not found in CI</td>
+      <td>File untracked in git (<code>??</code> status)</td>
+      <td><code>git add</code> + commit</td>
+    </tr>
+    <tr>
+      <td>Draft PR merge 405 error</td>
+      <td>Cannot merge draft PRs via API</td>
+      <td><code>markPullRequestReadyForReview</code> GraphQL + polling</td>
+    </tr>
+    <tr>
+      <td>Copilot agent 404 assignment</td>
+      <td>Bot username changes across API versions</td>
+      <td>Try 5 names + <code>@copilot</code> mention fallback</td>
+    </tr>
+    <tr>
+      <td>Node.js 20 deprecation warning</td>
+      <td>GitHub Actions migrating to Node 24</td>
+      <td><code>FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true</code></td>
+    </tr>
+    <tr>
+      <td>Issue node ID unresolvable</td>
+      <td>GitHub API propagation delay on new issues</td>
+      <td>Retry with incremental delay (5s, 10s, 15s)</td>
+    </tr>
+    <tr>
+      <td>Ad overlay blocking clicks</td>
+      <td>automationexercise.com serves ads</td>
+      <td>Force click + direct navigation fallback in ProductsPage</td>
+    </tr>
+  </table>
+  <div class="slide-number">15</div>
+</div>
+
+<!-- SLIDE 16: Stats -->
+<div class="slide">
+  <h2 class="slide-title">Framework at a Glance</h2>
+  
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="number">23</div>
+      <div class="label">Test Cases</div>
+    </div>
+    <div class="stat-box">
+      <div class="number">6</div>
+      <div class="label">Page Objects</div>
+    </div>
+    <div class="stat-box">
+      <div class="number">2</div>
+      <div class="label">Workflows</div>
+    </div>
+    <div class="stat-box">
+      <div class="number">2</div>
+      <div class="label">Max Reruns</div>
+    </div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="number">12</div>
+      <div class="label">Hidden Bugs</div>
+    </div>
+    <div class="stat-box">
+      <div class="number">5</div>
+      <div class="label">Bug Patterns</div>
+    </div>
+    <div class="stat-box">
+      <div class="number">30+</div>
+      <div class="label">PRs Merged</div>
+    </div>
+    <div class="stat-box">
+      <div class="number">0</div>
+      <div class="label">Manual Fix Needed</div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="text-align: center; margin-top: 30px;">
+    <p style="font-size: 24px; font-weight: 700;">From <span style="color: #f85149;">test failure</span> to <span style="color: #3fb950;">verified fix</span> — fully autonomous</p>
+    <p style="font-size: 16px; color: #8b949e; margin-top: 8px;">Only human intervention: reviewing and approving the PR</p>
+  </div>
+  <div class="slide-number">16</div>
+</div>
+
+<!-- SLIDE 17: Repository -->
+<div class="slide title-slide">
+  <h1>Thank You</h1>
+  <h2 style="font-size: 24px;">Self-Healing Test Framework with GitHub Copilot Agent</h2>
+  <div class="badges" style="margin-top: 30px;">
+    <span class="badge badge-blue">github.com/HarinderKaur91/AgenticAI</span>
+  </div>
+  <p class="meta" style="margin-top: 40px;">
+    Playwright Java &nbsp;•&nbsp; TestNG &nbsp;•&nbsp; GitHub Actions &nbsp;•&nbsp; Copilot Agent &nbsp;•&nbsp; ExtentReports
+  </p>
+  <p class="meta" style="margin-top: 16px; color: #484f58;">
+    Built by Harinder Kaur &nbsp;|&nbsp; April 2026
+  </p>
+  <div class="slide-number">17</div>
+</div>
+
+</body>
+</html>
