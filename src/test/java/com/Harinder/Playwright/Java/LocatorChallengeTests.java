@@ -2,6 +2,7 @@ package com.Harinder.Playwright.Java;
 
 import com.Harinder.Playwright.Base.BaseTest;
 import com.Harinder.Playwright.Utils.TestDataUtil;
+import com.microsoft.playwright.PlaywrightException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import java.nio.file.Paths;
@@ -384,8 +385,19 @@ public class LocatorChallengeTests extends BaseTest {
                 "Contact form should succeed. Got: " + successMsg);
 
         homePage.open();
-        page.locator("a[href='/delete_account']").click();
-        page.locator("h2[data-qa='account-deleted']").waitFor();
+        if (!page.locator("a[href='/delete_account']").first().isVisible()) {
+            page.locator("a[href='/login']").first().click();
+            loginPage.login(email, password);
+            page.locator("text=Logged in as " + name).waitFor();
+        }
+
+        page.locator("a[href='/delete_account']").first().click();
+        try {
+            page.locator("h2[data-qa='account-deleted']").waitFor();
+        } catch (PlaywrightException ex) {
+            page.navigate("https://automationexercise.com/delete_account");
+            page.locator("h2[data-qa='account-deleted']").waitFor();
+        }
         Assert.assertTrue(page.locator("h2[data-qa='account-deleted']").innerText().contains("ACCOUNT DELETED"),
                 "Account should be deleted.");
     }
