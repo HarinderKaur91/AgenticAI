@@ -260,13 +260,15 @@ jobs:
             }
 
             if (!assigned) {
-              // Fallback: add a comment mentioning @copilot to trigger it
-              console.log('Direct assignment failed. Adding @copilot mention as fallback...');
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number: issueNumber,
-                body: '@copilot Please analyze the test failures in this issue, identify the root cause, fix the source code, and open a PR targeting the main branch.'
-              });
-              console.log(`Added @copilot mention comment on issue #${issueNumber}.`);
+              console.log('Direct assignment failed.');
             }
+
+            // Always add @copilot comment to trigger the agent — assignment alone doesn't activate it
+            console.log('Adding @copilot mention to trigger the coding agent...');
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              body: '@copilot Please analyze the test failures in this issue, identify the root cause, fix the source code, and open a PR targeting the main branch.'
+            });
+            console.log(`@copilot mention added on issue #${issueNumber} — agent should start working.`);
