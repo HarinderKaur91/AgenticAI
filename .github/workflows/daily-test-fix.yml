@@ -40,8 +40,32 @@ jobs:
 
       - name: Run Tests
         id: run
-        run: mvn clean test
+        run: |
+          if [ "${{ github.event.inputs.rerun_count }}" != "0" ] && [ "${{ github.event.inputs.rerun_count }}" != "" ]; then
+            echo "Rerun detected — checking for failed tests XML from previous run..."
+            # Download the failed tests XML from the latest previous run
+            WORKFLOW_ID=$(gh api repos/${{ github.repository }}/actions/workflows --jq '.workflows[] | select(.name=="Daily Test And Auto Fix") | .id')
+            RUN_ID=$(gh api "repos/${{ github.repository }}/actions/workflows/${WORKFLOW_ID}/runs?per_page=5&status=completed" --jq '.workflow_runs[0].id')
+            if [ -n "$RUN_ID" ]; then
+              gh run download "$RUN_ID" -n testng-failed-xml -D testng-failed-artifact 2>/dev/null || true
+            fi
+            if [ -f "testng-failed-artifact/testng-failed.xml" ]; then
+              echo "Running only failed tests from previous run..."
+              mvn test -DsuiteXmlFile=testng-failed-artifact/testng-failed.xml
+            else
+              echo "No failed tests XML found, running all tests..."
+              mvn clean test
+            fi
+          else
+            mvn clean test
+          fi
         continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+
+      - name: Save test outcome
+        if: always()
+        run: echo "Test outcome: ${{ steps.run.outcome }}" > test-outcome.txt
 
       - name: Upload Reports
         if: always()
@@ -49,9 +73,19 @@ jobs:
         with:
           name: test-reports
           path: |
-            target/surefire-reports/**
-            test-output/**
-            reports/**
+            test-outcome.txt
+            target/surefire-reports/
+            test-output/
+            reports/
+          if-no-files-found: warn
+
+      - name: Upload Failed Tests XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testng-failed-xml
+          path: target/surefire-reports/testng-failed.xml
+          if-no-files-found: ignore
 
   open-issue-and-assign-copilot:
     needs: run-tests
