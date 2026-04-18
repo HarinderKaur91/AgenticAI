@@ -8,52 +8,46 @@ import java.util.List;
 
 public class PlaywrightTests extends BaseTest {
 
-    // BUG 1: assertFalse should be assertTrue — homepage IS visible when loaded
     @Test(priority = 1)
     public void verifyHomePageLoads() {
         homePage.open();
-        Assert.assertFalse(homePage.isHomePageVisible(), "Home page should be visible after navigation.");
+        Assert.assertTrue(homePage.isHomePageVisible(), "Home page should be visible after navigation.");
     }
 
-    // BUG 2: Checking for wrong URL path "/test_case" instead of "/test_cases"
     @Test(priority = 2)
     public void verifyTestCasesPageNavigation() {
         homePage.open();
         homePage.clickTestCases();
-        Assert.assertTrue(page.url().contains("/test_case"),
+        Assert.assertTrue(page.url().contains("/test_cases"),
                 "User should be on test cases page but URL is: " + page.url());
     }
 
-    // BUG 3: Wrong product count comparison — using == 0 instead of > 0
     @Test(priority = 3)
     public void verifyProductsPageIsVisible() {
         homePage.open();
         homePage.clickProducts();
         Assert.assertTrue(productsPage.isProductsPageVisible(), "Products page is not visible.");
-        Assert.assertTrue(productsPage.getVisibleProductCount() == 0, "Products should be displayed on the page.");
+        Assert.assertTrue(productsPage.getVisibleProductCount() > 0, "Products should be displayed on the page.");
     }
 
-    // BUG 4: Searching for "NonExistentProduct12345" which returns no results,
-    // then asserting results ARE displayed
     @Test(priority = 4)
     public void verifySearchProduct() {
         homePage.open();
         homePage.clickProducts();
 
-        productsPage.searchProduct("NonExistentProduct12345");
+        productsPage.searchProduct("Top");
 
         Assert.assertTrue(productsPage.isSearchedProductsVisible(), "Searched Products heading not visible.");
         Assert.assertTrue(productsPage.areSearchResultsDisplayed(),
                 "Search results should be displayed for valid product search.");
     }
 
-    // BUG 5: Opening product at index 99 which doesn't exist, will throw an error
     @Test(priority = 5)
     public void verifyFirstProductDetailPage() {
         homePage.open();
         homePage.clickProducts();
 
-        productsPage.openProductDetailByIndex(99);
+        productsPage.openProductDetailByIndex(0);
 
         Assert.assertTrue(productDetailPage.isProductDetailVisible(), "Product detail page is not visible.");
         Assert.assertFalse(productDetailPage.getProductName().isEmpty(), "Product name is empty.");
