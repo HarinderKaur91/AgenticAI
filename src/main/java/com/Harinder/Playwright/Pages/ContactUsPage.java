@@ -19,7 +19,9 @@ public class ContactUsPage {
         page.locator("input[data-qa='email']").fill(email);
         page.locator("input[data-qa='subject']").fill(subject);
         page.locator("textarea[data-qa='message']").fill(message);
-        page.locator("input[name='upload_file']").setInputFiles(java.nio.file.Path.of(filePath));
+        if (filePath != null && !filePath.isBlank()) {
+            page.locator("input[name='upload_file']").setInputFiles(java.nio.file.Path.of(filePath));
+        }
 
         page.onceDialog(dialog -> dialog.accept());
         page.locator("input[data-qa='submit-button']").click();

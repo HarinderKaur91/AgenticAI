@@ -1,6 +1,7 @@
 package com.Harinder.Playwright.Pages;
 
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Locator;
 
 public class LoginPage {
 
@@ -71,6 +72,12 @@ public class LoginPage {
         page.locator("input[data-qa='login-email']").fill(email);
         page.locator("input[data-qa='login-password']").fill(password);
         page.locator("button[data-qa='login-button']").click();
+    }
+
+    public String getLoginErrorMessage() {
+        Locator loginErrorMessage = page.locator("form[action='/login'] p");
+        loginErrorMessage.waitFor();
+        return loginErrorMessage.innerText().trim();
     }
 
     public void clickDeleteAccount() {
