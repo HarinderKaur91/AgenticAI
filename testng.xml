@@ -5,8 +5,9 @@
     </listeners>
     <test name="AutomationExercise Tests">
         <classes>
-            <class name="com.Harinder.Playwright.Java.PlaywrightTests"/>
+            <!-- <class name="com.Harinder.Playwright.Java.PlaywrightTests"/> -->
             <class name="com.Harinder.Playwright.Java.ComplexPlaywrightTests"/>
+            <class name="com.Harinder.Playwright.Java.LocatorChallengeTests"/>
         </classes>
     </test>
 </suite>

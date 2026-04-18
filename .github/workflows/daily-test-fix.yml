@@ -216,59 +216,33 @@ jobs:
             core.setOutput('issue_number', String(issueNumber));
 
       - name: Assign Copilot To Issue
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.COPILOT_TOKEN }}
-          script: |
-            const issueNumber = Number('${{ steps.issue.outputs.issue_number }}');
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+        run: |
+          ISSUE_NUMBER="${{ steps.issue.outputs.issue_number }}"
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
 
-            // Try multiple known Copilot bot names
-            const botNames = [
-              'copilot-swe-agent',
-              'copilot-swe-agent[bot]',
-              'copilot',
-              'copilot[bot]',
-              'github-copilot[bot]'
-            ];
+          echo "Assigning copilot-swe-agent to issue #${ISSUE_NUMBER} via REST API..."
 
-            let assigned = false;
-
-            for (const bot of botNames) {
-              try {
-                console.log(`Trying to assign "${bot}" to issue #${issueNumber}...`);
-                await github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
-                  owner,
-                  repo,
-                  issue_number: issueNumber,
-                  assignees: [bot],
-                  agent_assignment: {
-                    target_repo: `${owner}/${repo}`,
-                    base_branch: 'main'
-                  },
-                  headers: {
-                    'X-GitHub-Api-Version': '2022-11-28'
-                  }
-                });
-                console.log(`Successfully assigned "${bot}" to issue #${issueNumber}.`);
-                assigned = true;
-                break;
-              } catch (e) {
-                console.log(`Failed with "${bot}": ${e.status} ${e.message}`);
-              }
+          RESPONSE=$(gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${OWNER}/${REPO}/issues/${ISSUE_NUMBER}/assignees" \
+            --input - <<EOF
+          {
+            "assignees": ["copilot-swe-agent[bot]"],
+            "agent_assignment": {
+              "target_repo": "${OWNER}/${REPO}",
+              "base_branch": "main",
+              "custom_instructions": "Analyze the test failures in this issue, identify the root cause in the source code, fix it, and open a PR targeting the main branch.",
+              "custom_agent": "",
+              "model": ""
             }
+          }
+          EOF
+          )
 
-            if (!assigned) {
-              console.log('Direct assignment failed.');
-            }
-
-            // Always add @copilot comment to trigger the agent — assignment alone doesn't activate it
-            console.log('Adding @copilot mention to trigger the coding agent...');
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: issueNumber,
-              body: '@copilot Please analyze the test failures in this issue, identify the root cause, fix the source code, and open a PR targeting the main branch.'
-            });
-            console.log(`@copilot mention added on issue #${issueNumber} — agent should start working.`);
+          echo "API Response: ${RESPONSE}"
+          echo "Copilot cloud agent assigned to issue #${ISSUE_NUMBER}."
