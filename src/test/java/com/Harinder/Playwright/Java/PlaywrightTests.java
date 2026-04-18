@@ -104,10 +104,11 @@ public class PlaywrightTests extends BaseTest {
 
         String filePath = Paths.get("src/test/resources/test-upload.txt").toAbsolutePath().toString();
 
+        // BUG: Submitting form with empty name and no subject — required fields missing
         contactUsPage.submitContactForm(
-                "Harinder",
+                "",
                 TestDataUtil.uniqueEmail(),
-                "Playwright Java Test",
+                "",
                 "This is a sample message from Playwright automation.",
                 filePath
         );
@@ -143,7 +144,8 @@ public class PlaywrightTests extends BaseTest {
         loginPage.clickLogout();
         Assert.assertTrue(loginPage.isLoginPageVisible(), "User is not navigated back to login page after logout.");
 
-        loginPage.login(email, password);
+        // BUG: Using wrong password to re-login — should use the original password
+        loginPage.login(email, "wrongPassword123!");
         Assert.assertTrue(loginPage.isLoggedInAsVisible(name), "User could not log in again.");
 
         loginPage.clickDeleteAccount();
@@ -185,7 +187,7 @@ public class PlaywrightTests extends BaseTest {
         homePage.clickProducts();
         productsPage.openProductDetailByIndex(0);
 
-        productDetailPage.setQuantity("1");
+        productDetailPage.setQuantity("3");
         productDetailPage.clickAddToCart();
         productDetailPage.clickViewCartFromPopup();
 
@@ -196,7 +198,8 @@ public class PlaywrightTests extends BaseTest {
         homePage.clickCart();
 
         Assert.assertTrue(cartPage.isCartPageVisible(), "Cart page not visible after re-navigation.");
-        Assert.assertEquals(cartPage.getQuantityByRow(0), "1",
+        // BUG: Set quantity to 3 but asserts it should be 5
+        Assert.assertEquals(cartPage.getQuantityByRow(0), "5",
                 "Quantity should persist after navigation.");
     }
 
