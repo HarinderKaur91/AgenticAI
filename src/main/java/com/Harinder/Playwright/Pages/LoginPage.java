@@ -73,6 +73,11 @@ public class LoginPage {
         page.locator("button[data-qa='login-button']").click();
     }
 
+    public String getLoginErrorMessage() {
+        page.locator("form[action='/login'] p").waitFor();
+        return page.locator("form[action='/login'] p").innerText().trim();
+    }
+
     public void clickDeleteAccount() {
         page.locator("a[href='/delete_account']").click();
     }

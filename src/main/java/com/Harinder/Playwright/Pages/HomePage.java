@@ -63,4 +63,9 @@ public class HomePage {
         LoggerUtil.info("Subscription message: " + message);
         return message;
     }
+
+    public boolean isSubscriptionSuccessMessageVisible() {
+        return page.locator(".alert-success.alert").count() > 0
+                && page.locator(".alert-success.alert").first().isVisible();
+    }
 }
