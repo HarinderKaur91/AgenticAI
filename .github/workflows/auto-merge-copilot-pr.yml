@@ -3,11 +3,14 @@ name: Auto Merge Copilot PR After Approval
 on:
   pull_request_review:
     types: [submitted]
+  pull_request:
+    types: [closed]
 
 permissions:
   contents: write
   pull-requests: write
   actions: write
+  issues: write
 
 jobs:
   auto-merge:
@@ -170,7 +173,7 @@ jobs:
             }
             rerunCount++;
 
-            const MAX_RERUNS = 2;
+            const MAX_RERUNS = 1;
             if (rerunCount > MAX_RERUNS) {
               console.log(`Rerun limit reached (${MAX_RERUNS}). Skipping further reruns.`);
               return;
@@ -186,3 +189,110 @@ jobs:
               }
             });
             console.log(`Triggered test workflow - Rerun ${rerunCount}`);
+
+  escalate-rejected-pr:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == false &&
+      contains(fromJSON('["copilot-swe-agent[bot]","copilot[bot]","github-copilot[bot]","copilot"]'), github.event.pull_request.user.login)
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Extract Issue Number and Failed Tests
+        id: extract
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.COPILOT_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const issueMatch = pr.body?.match(/#(\d+)/);
+            const issueNumber = issueMatch ? issueMatch[1] : '';
+            core.setOutput('issue_number', issueNumber);
+            core.setOutput('pr_number', String(pr.number));
+            core.setOutput('pr_title', pr.title || 'Copilot PR');
+            core.setOutput('pr_url', pr.html_url);
+
+            // Try to get failed test names from the linked issue
+            let failedTests = 'Unknown tests';
+            if (issueNumber) {
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: Number(issueNumber)
+                });
+                failedTests = issue.title || failedTests;
+              } catch (e) {
+                console.log(`Could not fetch issue: ${e.message}`);
+              }
+            }
+            core.setOutput('failed_tests', failedTests);
+
+      - name: Create JIRA Bug for Rejected Copilot Fix
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+        run: |
+          PR_NUMBER="${{ steps.extract.outputs.pr_number }}"
+          PR_TITLE="${{ steps.extract.outputs.pr_title }}"
+          PR_URL="${{ steps.extract.outputs.pr_url }}"
+          FAILED_TESTS="${{ steps.extract.outputs.failed_tests }}"
+          ISSUE_NUMBER="${{ steps.extract.outputs.issue_number }}"
+          REPO="${{ github.repository }}"
+
+          SUMMARY="[Auto-Escalation] Copilot fix rejected - PR #${PR_NUMBER}"
+          DESCRIPTION="A Copilot-generated fix PR was reviewed and closed without merging, indicating the automated fix was insufficient.\n\n*PR Details:*\n- PR: [#${PR_NUMBER}](${PR_URL})\n- PR Title: ${PR_TITLE}\n- Related GitHub Issue: [#${ISSUE_NUMBER}](https://github.com/${REPO}/issues/${ISSUE_NUMBER})\n- Failed Tests: ${FAILED_TESTS}\n\n*Why this was escalated:*\nThe Copilot agent proposed a fix that was rejected by a human reviewer. This test failure requires manual investigation and a developer-written fix.\n\n*Action Required:*\n# Investigate the failing tests listed above\n# Review the rejected PR for context on what was attempted\n# Write and submit a proper fix"
+
+          JIRA_PAYLOAD=$(printf '{"fields":{"project":{"key":"%s"},"summary":"%s","description":"%s","issuetype":{"name":"Bug"},"priority":{"name":"Highest"},"labels":["auto-test-failure","self-healing-framework","copilot-fix-rejected"]}}' \
+            "$JIRA_PROJECT_KEY" "$SUMMARY" "$DESCRIPTION")
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "${JIRA_BASE_URL}/rest/api/3/issue" \
+            -H "Content-Type: application/json" \
+            -u "${JIRA_EMAIL}:${JIRA_API_TOKEN}" \
+            -d "$JIRA_PAYLOAD")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            JIRA_KEY=$(echo "$BODY" | jq -r '.key')
+            echo "JIRA bug created: $JIRA_KEY"
+            echo "jira_key=$JIRA_KEY" >> $GITHUB_OUTPUT
+          else
+            echo "Failed to create JIRA bug (HTTP $HTTP_CODE): $BODY"
+          fi
+
+      - name: Label and Comment on GitHub Issue
+        if: steps.extract.outputs.issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.COPILOT_TOKEN }}
+          script: |
+            const issueNumber = Number('${{ steps.extract.outputs.issue_number }}');
+            const prNumber = '${{ steps.extract.outputs.pr_number }}';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Add label
+            try {
+              await github.rest.issues.addLabels({
+                owner, repo,
+                issue_number: issueNumber,
+                labels: ['needs-manual-fix']
+              });
+            } catch (e) {
+              console.log(`Could not add label: ${e.message}`);
+            }
+
+            // Add comment
+            await github.rest.issues.createComment({
+              owner, repo,
+              issue_number: issueNumber,
+              body: `⚠️ **Copilot fix PR #${prNumber} was rejected** (closed without merging).\n\nThe automated fix was insufficient. This issue has been escalated to JIRA for manual investigation.\n\nLabel \`needs-manual-fix\` has been added.`
+            });

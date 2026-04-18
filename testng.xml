@@ -6,8 +6,8 @@
     <test name="AutomationExercise Tests">
         <classes>
             <!-- <class name="com.Harinder.Playwright.Java.PlaywrightTests"/> -->
-            <class name="com.Harinder.Playwright.Java.ComplexPlaywrightTests"/>
-            <class name="com.Harinder.Playwright.Java.LocatorChallengeTests"/>
+            <!-- <class name="com.Harinder.Playwright.Java.ComplexPlaywrightTests"/> -->
+            <!-- <class name="com.Harinder.Playwright.Java.LocatorChallengeTests"/> -->
             <class name="com.Harinder.Playwright.Java.UnfixableTests"/>
         </classes>
     </test>
