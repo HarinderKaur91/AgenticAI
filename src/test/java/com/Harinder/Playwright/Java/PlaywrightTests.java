@@ -325,8 +325,7 @@ public class PlaywrightTests extends BaseTest {
         // Step 4: Now login with the registered user
         homePage.open();
         homePage.clickSignupLogin();
-        // BUG: Using wrong email variable — uses a NEW unique email instead of the one registered above
-        loginPage.login(TestDataUtil.uniqueEmail(), password);
+        loginPage.login(email, password);
 
         // Step 5: Navigate to cart and verify product is still there
         homePage.clickCart();
@@ -360,13 +359,11 @@ public class PlaywrightTests extends BaseTest {
 
         Assert.assertTrue(cartPage.isCartPageVisible(), "Cart page not visible.");
 
-        // BUG: Asserts cart has exactly 3 rows, but we only added 1 product
-        Assert.assertEquals(cartPage.getCartRowCount(), 3,
+        Assert.assertEquals(cartPage.getCartRowCount(), 1,
                 "Cart should have the correct number of products.");
 
         List<String> cartNames = cartPage.getCartProductNames();
-        // BUG: Compares with a hardcoded wrong name instead of the dynamic expectedName
-        Assert.assertTrue(cartNames.contains("Fancy Green Top"),
+        Assert.assertTrue(cartNames.contains(expectedName),
                 "Cart should contain the searched product. Found: " + cartNames);
     }
 
@@ -391,11 +388,7 @@ public class PlaywrightTests extends BaseTest {
         // Try to register again with the same email
         homePage.open();
         homePage.clickSignupLogin();
-        // BUG: Uses TestDataUtil.uniqueEmail() which generates a NEW email each time
-        // So this will succeed instead of showing the "Email Address already exist!" error
-        loginPage.signup("DuplicateUser", TestDataUtil.uniqueEmail());
-
-        // This assertion expects an error that will never appear because the email is unique
+        loginPage.signup("DuplicateUser", email);
         Assert.assertTrue(page.locator("text=Email Address already exist!").isVisible(),
                 "Should show duplicate email error but signup succeeded with a different email.");
     }
@@ -426,8 +419,7 @@ public class PlaywrightTests extends BaseTest {
 
         Assert.assertTrue(cartPage.isCartPageVisible(), "Cart should be visible.");
         Assert.assertEquals(cartPage.getCartRowCount(), 1, "Cart should have 1 product row.");
-        // BUG: Set quantity to "3" but asserts "1" — wrong expected value
-        Assert.assertEquals(cartPage.getQuantityByRow(0), "1",
+        Assert.assertEquals(cartPage.getQuantityByRow(0), "3",
                 "Quantity in cart should match what was set on product detail page.");
 
         // Logout and login again
@@ -437,8 +429,7 @@ public class PlaywrightTests extends BaseTest {
         loginPage.login(email, password);
         Assert.assertTrue(loginPage.isLoggedInAsVisible(name), "Should be logged in after re-login.");
 
-        // BUG: Navigates to home but never clicks cart — then asserts cart product name
-        homePage.open();
+        homePage.clickCart();
         List<String> cartNames = cartPage.getCartProductNames();
         Assert.assertTrue(cartNames.contains(productName),
                 "Product should still be in cart after re-login. Found: " + cartNames);
@@ -478,13 +469,7 @@ public class PlaywrightTests extends BaseTest {
         );
 
         String successMessage = contactUsPage.getSuccessMessage();
-        // BUG: Wrong assertion — checks for "Contact Form Submitted" instead of the real message
-        Assert.assertEquals(successMessage, "Contact Form Submitted",
+        Assert.assertEquals(successMessage, "Success! Your details have been submitted successfully.",
                 "Contact form success message does not match. Got: " + successMessage);
-
-        // BUG: Then navigates to home and asserts subscription message is visible (it shouldn't be — never subscribed)
-        homePage.open();
-        Assert.assertTrue(homePage.isSubscriptionSuccessMessageVisible(),
-                "Subscription success should be visible on home page after contact form submission.");
     }
 }
