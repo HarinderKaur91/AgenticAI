@@ -395,7 +395,8 @@ public class LocatorChallengeTests extends BaseTest {
         try {
             page.locator("h2[data-qa='account-deleted']").waitFor();
         } catch (PlaywrightException ex) {
-            page.navigate("https://automationexercise.com/delete_account");
+            homePage.open();
+            page.locator("a[href='/delete_account']").first().click();
             page.locator("h2[data-qa='account-deleted']").waitFor();
         }
         Assert.assertTrue(page.locator("h2[data-qa='account-deleted']").innerText().contains("ACCOUNT DELETED"),
