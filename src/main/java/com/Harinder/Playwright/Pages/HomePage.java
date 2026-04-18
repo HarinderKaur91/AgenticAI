@@ -1,5 +1,6 @@
 package com.Harinder.Playwright.Pages;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Locator;
 import com.Harinder.Playwright.Utils.LoggerUtil;
 
 public class HomePage {
@@ -65,7 +66,7 @@ public class HomePage {
     }
 
     public boolean isSubscriptionSuccessMessageVisible() {
-        com.microsoft.playwright.Locator successMessage = page.locator(".alert-success.alert");
+        Locator successMessage = page.locator(".alert-success.alert");
         return successMessage.count() > 0 && successMessage.first().isVisible();
     }
 }
