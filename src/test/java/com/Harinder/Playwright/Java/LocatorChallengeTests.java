@@ -36,43 +36,43 @@ public class LocatorChallengeTests extends BaseTest {
         homePage.open();
         homePage.clickSignupLogin();
 
-        page.locator("input[data-qa='signup-username']").fill(name);         // WRONG: correct is 'signup-name'
-        page.locator("input[data-qa='signup-mail']").fill(email);            // WRONG: correct is 'signup-email'
-        page.locator("button[data-qa='signup-btn']").click();                // WRONG: correct is 'signup-button'
+        page.locator("input[data-qa='signup-name']").fill(name);
+        page.locator("input[data-qa='signup-email']").fill(email);
+        page.locator("button[data-qa='signup-button']").click();
 
         page.locator("text=Enter Account Information").waitFor();
         Assert.assertTrue(page.locator("text=Enter Account Information").isVisible());
 
-        page.locator("#gender1").check();                                    // WRONG: correct is '#id_gender1'
-        page.locator("input[data-qa='passwd']").fill(password);              // WRONG: correct is 'password'
-        page.locator("select[data-qa='day']").selectOption("10");            // WRONG: correct is 'days'
-        page.locator("select[data-qa='month']").selectOption("5");           // WRONG: correct is 'months'
-        page.locator("select[data-qa='year']").selectOption("1995");         // WRONG: correct is 'years'
+        page.locator("#id_gender1").check();
+        page.locator("input[data-qa='password']").fill(password);
+        page.locator("select[data-qa='days']").selectOption("10");
+        page.locator("select[data-qa='months']").selectOption("5");
+        page.locator("select[data-qa='years']").selectOption("1995");
 
-        page.locator("input[data-qa='firstname']").fill("Test");             // WRONG: correct is 'first_name'
-        page.locator("input[data-qa='lastname']").fill("User");              // WRONG: correct is 'last_name'
-        page.locator("input[data-qa='company-name']").fill("QA Corp");       // WRONG: correct is 'company'
-        page.locator("input[data-qa='street-address']").fill("123 Main St"); // WRONG: correct is 'address'
-        page.locator("input[data-qa='street-address-2']").fill("Unit 5");    // WRONG: correct is 'address2'
-        page.locator("select[data-qa='country-select']").selectOption("Canada"); // WRONG: correct is 'country'
-        page.locator("input[data-qa='province']").fill("Ontario");           // WRONG: correct is 'state'
-        page.locator("input[data-qa='city-name']").fill("Toronto");          // WRONG: correct is 'city'
-        page.locator("input[data-qa='zip']").fill("M5V3L9");                 // WRONG: correct is 'zipcode'
-        page.locator("input[data-qa='phone']").fill("9876543210");           // WRONG: correct is 'mobile_number'
+        page.locator("input[data-qa='first_name']").fill("Test");
+        page.locator("input[data-qa='last_name']").fill("User");
+        page.locator("input[data-qa='company']").fill("QA Corp");
+        page.locator("input[data-qa='address']").fill("123 Main St");
+        page.locator("input[data-qa='address2']").fill("Unit 5");
+        page.locator("select[data-qa='country']").selectOption("Canada");
+        page.locator("input[data-qa='state']").fill("Ontario");
+        page.locator("input[data-qa='city']").fill("Toronto");
+        page.locator("input[data-qa='zipcode']").fill("M5V3L9");
+        page.locator("input[data-qa='mobile_number']").fill("9876543210");
 
-        page.locator("button[data-qa='create-btn']").click();                // WRONG: correct is 'create-account'
+        page.locator("button[data-qa='create-account']").click();
 
-        page.locator("h2[data-qa='account-created-msg']").waitFor();         // WRONG: correct is 'account-created'
-        String msg = page.locator("h2[data-qa='account-created-msg']").innerText().trim(); // WRONG: same
+        page.locator("h2[data-qa='account-created']").waitFor();
+        String msg = page.locator("h2[data-qa='account-created']").innerText().trim();
         Assert.assertTrue(msg.contains("ACCOUNT CREATED"), "Account creation failed.");
 
-        page.locator("a[data-qa='continue-btn']").click();                   // WRONG: correct is 'continue-button'
+        page.locator("a[data-qa='continue-button']").click();
 
         page.locator("text=Logged in as").waitFor();
         Assert.assertTrue(page.locator("text=Logged in as " + name).isVisible(),
                 "User should be logged in after registration.");
 
-        page.locator("a[href='/remove_account']").click();                   // WRONG: correct is '/delete_account'
+        page.locator("a[href='/delete_account']").click();
     }
 
     /**
@@ -96,29 +96,29 @@ public class LocatorChallengeTests extends BaseTest {
     public void verifyProductSearchWithBrokenLocators() {
         homePage.open();
 
-        page.locator("a.nav-link[href='/products']").first().click();        // WRONG: correct is a[href='/products'] (no .nav-link class)
+        page.locator("a[href='/products']").first().click();
 
-        page.locator("h2.products-title").waitFor();                         // WRONG: correct is h2:has-text('All Products')
-        Assert.assertTrue(page.locator("h2.products-title").isVisible(),     // WRONG: same
+        page.locator("h2:has-text('All Products')").waitFor();
+        Assert.assertTrue(page.locator("h2:has-text('All Products')").isVisible(),
                 "Products page heading should be visible.");
 
-        page.locator("#product-search-input").fill("Blue Top");              // WRONG: correct is #search_product
-        page.locator("#search-btn").click();                                 // WRONG: correct is #submit_search
+        page.locator("#search_product").fill("Blue Top");
+        page.locator("#submit_search").click();
 
-        page.locator("h2.searched-title").waitFor();                         // WRONG: correct is h2:has-text('Searched Products')
-        Assert.assertTrue(page.locator("h2.searched-title").isVisible(),     // WRONG: same
+        page.locator("h2:has-text('Searched Products')").waitFor();
+        Assert.assertTrue(page.locator("h2:has-text('Searched Products')").isVisible(),
                 "Searched Products heading should be visible.");
 
-        int resultCount = page.locator(".product-grid .product-card").count(); // WRONG: correct is .features_items .product-image-wrapper
+        int resultCount = page.locator(".features_items .product-image-wrapper").count();
         Assert.assertTrue(resultCount > 0, "Search results should contain products.");
 
-        page.locator(".product-card:first-child a.view-details").click();    // WRONG: correct is a[href*='/product_details/']
+        page.locator("a[href*='/product_details/']").first().click();
 
-        page.locator(".product-info").waitFor();                             // WRONG: correct is .product-information
-        Assert.assertTrue(page.locator(".product-info h2.product-title").isVisible(), // WRONG: correct is .product-information h2
+        page.locator(".product-information").waitFor();
+        Assert.assertTrue(page.locator(".product-information h2").isVisible(),
                 "Product detail name should be visible.");
 
-        String productName = page.locator(".product-info h2.product-title").textContent().trim(); // WRONG: same
+        String productName = page.locator(".product-information h2").textContent().trim();
         Assert.assertFalse(productName.isEmpty(), "Product name should not be empty.");
     }
 
@@ -145,23 +145,23 @@ public class LocatorChallengeTests extends BaseTest {
 
         String productName = productDetailPage.getProductName();
 
-        page.locator("input#product-qty").fill("4");                         // WRONG: correct is #quantity
+        page.locator("input#quantity").fill("4");
 
-        page.locator("button.add-to-cart-btn").click();                      // WRONG: correct is button:has-text('Add to cart')
+        page.locator("button:has-text('Add to cart')").click();
 
-        page.locator("#cart-modal a.view-cart-link").waitFor();               // WRONG: correct is .modal-content a[href='/view_cart']
-        page.locator("#cart-modal a.view-cart-link").click();                 // WRONG: same
+        page.locator(".modal-content a[href='/view_cart']").waitFor();
+        page.locator(".modal-content a[href='/view_cart']").click();
 
-        page.locator("table#shopping-cart tbody").waitFor();                  // WRONG: correct is #cart_info_table
-        int rows = page.locator("table#shopping-cart tbody tr").count();      // WRONG: correct is #cart_info_table tbody tr
+        page.locator("#cart_info_table tbody").waitFor();
+        int rows = page.locator("#cart_info_table tbody tr").count();
         Assert.assertEquals(rows, 1, "Cart should have exactly 1 row.");
 
-        String cartProductName = page.locator("table#shopping-cart tbody tr:first-child td.product-name a") // WRONG: correct is .cart_description h4 a
+        String cartProductName = page.locator("#cart_info_table tbody tr:first-child .cart_description h4 a")
                 .textContent().trim();
         Assert.assertEquals(cartProductName, productName,
                 "Cart product should match what was added.");
 
-        String qty = page.locator("table#shopping-cart tbody tr:first-child td.cart-qty button") // WRONG: correct is .cart_quantity button
+        String qty = page.locator("#cart_info_table tbody tr:first-child .cart_quantity button")
                 .textContent().trim();
         Assert.assertEquals(qty, "4", "Cart quantity should be 4.");
     }
@@ -186,24 +186,24 @@ public class LocatorChallengeTests extends BaseTest {
     public void verifyContactUsWithBrokenLocators() {
         homePage.open();
 
-        page.locator("a.nav-link[href='/contact']").first().click();         // WRONG: correct is a[href='/contact_us'] (no .nav-link, wrong href)
+        page.locator("a[href='/contact_us']").first().click();
 
-        page.locator("h2.contact-title:has-text('Get In Touch')").waitFor(); // WRONG: correct is text=Get In Touch
-        Assert.assertTrue(page.locator("h2.contact-title").isVisible(),      // WRONG: same
+        page.locator("text=Get In Touch").waitFor();
+        Assert.assertTrue(page.locator("text=Get In Touch").isVisible(),
                 "Contact Us page should display 'Get In Touch'.");
 
-        page.locator("input[data-qa='contact-name']").fill("Locator Tester");     // WRONG: correct is 'name'
-        page.locator("input[data-qa='contact-email']").fill(TestDataUtil.uniqueEmail()); // WRONG: correct is 'email'
-        page.locator("input[data-qa='contact-subject']").fill("Broken Locator Test");    // WRONG: correct is 'subject'
-        page.locator("textarea[data-qa='contact-message']").fill("Testing DOM access by agent."); // WRONG: correct is 'message'
-        page.locator("input[data-qa='file-upload']").setInputFiles(          // WRONG: correct is input[name='upload_file']
+        page.locator("input[data-qa='name']").fill("Locator Tester");
+        page.locator("input[data-qa='email']").fill(TestDataUtil.uniqueEmail());
+        page.locator("input[data-qa='subject']").fill("Broken Locator Test");
+        page.locator("textarea[data-qa='message']").fill("Testing DOM access by agent.");
+        page.locator("input[name='upload_file']").setInputFiles(
                 java.nio.file.Path.of("src/test/resources/test-upload.txt").toAbsolutePath());
 
         page.onceDialog(dialog -> dialog.accept());
-        page.locator("input[data-qa='contact-submit']").click();             // WRONG: correct is 'submit-button'
+        page.locator("input[data-qa='submit-button']").click();
 
-        page.locator("div.success-message.alert-success").waitFor();         // WRONG: correct is .status.alert.alert-success
-        String result = page.locator("div.success-message.alert-success").textContent().trim(); // WRONG: same
+        page.locator(".status.alert.alert-success").waitFor();
+        String result = page.locator(".status.alert.alert-success").textContent().trim();
         Assert.assertTrue(result.contains("Success! Your details have been submitted successfully."),
                 "Contact form success message not found. Got: " + result);
     }
@@ -236,22 +236,22 @@ public class LocatorChallengeTests extends BaseTest {
         loginPage.clickContinue();
         loginPage.clickLogout();
 
-        page.locator("h2.login-title:has-text('Login to your account')").waitFor(); // WRONG: correct is text=Login to your account
-        Assert.assertTrue(page.locator("h2.login-title").isVisible(),        // WRONG: same
+        page.locator("text=Login to your account").waitFor();
+        Assert.assertTrue(page.locator("text=Login to your account").isVisible(),
                 "Login page should be visible after logout.");
 
-        page.locator("input[data-qa='login-user-email']").fill(email);       // WRONG: correct is 'login-email'
-        page.locator("input[data-qa='login-user-password']").fill(password);  // WRONG: correct is 'login-password'
-        page.locator("button[data-qa='login-submit']").click();              // WRONG: correct is 'login-button'
+        page.locator("input[data-qa='login-email']").fill(email);
+        page.locator("input[data-qa='login-password']").fill(password);
+        page.locator("button[data-qa='login-button']").click();
 
         page.locator("text=Logged in as").waitFor();
         Assert.assertTrue(page.locator("text=Logged in as " + name).isVisible(),
                 "Should be logged in with correct name.");
 
-        page.locator("a.nav-link[href='/signout']").click();                 // WRONG: correct is a[href='/logout']
+        page.locator("a[href='/logout']").click();
 
-        page.locator("h2.login-title").waitFor();                            // WRONG: same fabricated class
-        Assert.assertTrue(page.locator("h2.login-title").isVisible(),        // WRONG: same
+        page.locator("text=Login to your account").waitFor();
+        Assert.assertTrue(page.locator("text=Login to your account").isVisible(),
                 "Should be back on login page after second logout.");
 
         homePage.open();
@@ -279,16 +279,16 @@ public class LocatorChallengeTests extends BaseTest {
 
         page.locator("footer").scrollIntoViewIfNeeded();
 
-        page.locator("h2.footer-title:has-text('Subscription')").waitFor();  // WRONG: fabricated class
-        Assert.assertTrue(page.locator("h2.footer-title").isVisible(),       // WRONG: same
+        page.locator("text=Subscription").waitFor();
+        Assert.assertTrue(page.locator("text=Subscription").first().isVisible(),
                 "Subscription section heading should be visible.");
 
-        page.locator("input#newsletter-email").fill(TestDataUtil.uniqueEmail()); // WRONG: correct is #susbscribe_email (note real site has typo)
+        page.locator("input#susbscribe_email").fill(TestDataUtil.uniqueEmail());
 
-        page.locator("button#subscribe-btn").click();                        // WRONG: correct is #subscribe
+        page.locator("button#subscribe").click();
 
-        page.locator("div.subscription-success.alert-success").waitFor();    // WRONG: correct is .alert-success.alert
-        String msg = page.locator("div.subscription-success.alert-success").textContent().trim(); // WRONG: same
+        page.locator(".alert-success.alert").waitFor();
+        String msg = page.locator(".alert-success.alert").textContent().trim();
         Assert.assertTrue(msg.contains("You have been successfully subscribed!"),
                 "Subscription success message not found. Got: " + msg);
     }
@@ -321,72 +321,72 @@ public class LocatorChallengeTests extends BaseTest {
         String password = TestDataUtil.password();
 
         homePage.open();
-        page.locator("a.nav-link[href='/register']").first().click();        // WRONG: correct is a[href='/login'] (no .nav-link, wrong href)
+        page.locator("a[href='/login']").first().click();
 
-        page.locator("input[data-qa='signup-username']").fill(name);         // WRONG: correct is 'signup-name'
-        page.locator("input[data-qa='signup-mail']").fill(email);            // WRONG: correct is 'signup-email'
-        page.locator("button[data-qa='signup-btn']").click();                // WRONG: correct is 'signup-button'
+        page.locator("input[data-qa='signup-name']").fill(name);
+        page.locator("input[data-qa='signup-email']").fill(email);
+        page.locator("button[data-qa='signup-button']").click();
 
         page.locator("text=Enter Account Information").waitFor();
-        page.locator("#gender-male").check();                                // WRONG: correct is #id_gender1
-        page.locator("input[data-qa='passwd']").fill(password);              // WRONG: correct is 'password'
-        page.locator("select[data-qa='day']").selectOption("15");            // WRONG: correct is 'days'
-        page.locator("select[data-qa='month']").selectOption("8");           // WRONG: correct is 'months'
-        page.locator("select[data-qa='year']").selectOption("1990");         // WRONG: correct is 'years'
-        page.locator("input[data-qa='firstname']").fill(name);               // WRONG: correct is 'first_name'
-        page.locator("input[data-qa='lastname']").fill("Tester");            // WRONG: correct is 'last_name'
-        page.locator("input[data-qa='company-name']").fill("AgenticAI");     // WRONG: correct is 'company'
-        page.locator("input[data-qa='street-address']").fill("456 Oak Ave"); // WRONG: correct is 'address'
-        page.locator("select[data-qa='country-select']").selectOption("United States"); // WRONG: correct is 'country'
-        page.locator("input[data-qa='province']").fill("California");        // WRONG: correct is 'state'
-        page.locator("input[data-qa='city-name']").fill("San Francisco");    // WRONG: correct is 'city'
-        page.locator("input[data-qa='zip']").fill("94105");                  // WRONG: correct is 'zipcode'
-        page.locator("input[data-qa='phone']").fill("5551234567");           // WRONG: correct is 'mobile_number'
-        page.locator("button[data-qa='create-btn']").click();                // WRONG: correct is 'create-account'
+        page.locator("#id_gender1").check();
+        page.locator("input[data-qa='password']").fill(password);
+        page.locator("select[data-qa='days']").selectOption("15");
+        page.locator("select[data-qa='months']").selectOption("8");
+        page.locator("select[data-qa='years']").selectOption("1990");
+        page.locator("input[data-qa='first_name']").fill(name);
+        page.locator("input[data-qa='last_name']").fill("Tester");
+        page.locator("input[data-qa='company']").fill("AgenticAI");
+        page.locator("input[data-qa='address']").fill("456 Oak Ave");
+        page.locator("select[data-qa='country']").selectOption("United States");
+        page.locator("input[data-qa='state']").fill("California");
+        page.locator("input[data-qa='city']").fill("San Francisco");
+        page.locator("input[data-qa='zipcode']").fill("94105");
+        page.locator("input[data-qa='mobile_number']").fill("5551234567");
+        page.locator("button[data-qa='create-account']").click();
 
-        page.locator("h2[data-qa='account-created-msg']").waitFor();         // WRONG: correct is 'account-created'
-        page.locator("a[data-qa='continue-btn']").click();                   // WRONG: correct is 'continue-button'
+        page.locator("h2[data-qa='account-created']").waitFor();
+        page.locator("a[data-qa='continue-button']").click();
 
-        page.locator("a.nav-link[href='/products']").first().click();        // WRONG: correct is a[href='/products']
-        page.locator(".product-grid .product-card:first-child a.view-details").click(); // WRONG: correct is a[href*='/product_details/']
+        page.locator("a[href='/products']").first().click();
+        page.locator("a[href*='/product_details/']").first().click();
 
-        page.locator(".product-info").waitFor();                             // WRONG: correct is .product-information
-        String productName = page.locator(".product-info h2.product-title").textContent().trim(); // WRONG: correct is .product-information h2
-        page.locator("input#product-qty").fill("2");                         // WRONG: correct is #quantity
-        page.locator("button.add-to-cart-btn").click();                      // WRONG: correct is button:has-text('Add to cart')
-        page.locator("#cart-modal a.view-cart-link").waitFor();               // WRONG: correct is .modal-content a[href='/view_cart']
-        page.locator("#cart-modal a.view-cart-link").click();                 // WRONG: same
+        page.locator(".product-information").waitFor();
+        String productName = page.locator(".product-information h2").textContent().trim();
+        page.locator("input#quantity").fill("2");
+        page.locator("button:has-text('Add to cart')").click();
+        page.locator(".modal-content a[href='/view_cart']").waitFor();
+        page.locator(".modal-content a[href='/view_cart']").click();
 
-        page.locator("table#shopping-cart").waitFor();                       // WRONG: correct is #cart_info_table
-        Assert.assertEquals(page.locator("table#shopping-cart tbody tr").count(), 1, // WRONG: same
+        page.locator("#cart_info_table").waitFor();
+        Assert.assertEquals(page.locator("#cart_info_table tbody tr").count(), 1,
                 "Cart should have 1 item.");
-        String cartQty = page.locator("table#shopping-cart tbody tr:first-child td.cart-qty button") // WRONG: correct is .cart_quantity button
+        String cartQty = page.locator("#cart_info_table tbody tr:first-child .cart_quantity button")
                 .textContent().trim();
         Assert.assertEquals(cartQty, "2", "Cart quantity should be 2.");
 
         page.locator("footer").scrollIntoViewIfNeeded();
-        page.locator("input#newsletter-email").fill(email);                  // WRONG: correct is #susbscribe_email
-        page.locator("button#subscribe-btn").click();                        // WRONG: correct is #subscribe
-        page.locator("div.subscription-success.alert-success").waitFor();    // WRONG: correct is .alert-success.alert
+        page.locator("input#susbscribe_email").fill(email);
+        page.locator("button#subscribe").click();
+        page.locator(".alert-success.alert").waitFor();
 
         homePage.open();
-        page.locator("a.nav-link[href='/contact']").first().click();         // WRONG: correct is a[href='/contact_us']
-        page.locator("input[data-qa='contact-name']").fill(name);            // WRONG: correct is 'name'
-        page.locator("input[data-qa='contact-email']").fill(email);          // WRONG: correct is 'email'
-        page.locator("input[data-qa='contact-subject']").fill("Full Journey Test"); // WRONG: correct is 'subject'
-        page.locator("textarea[data-qa='contact-message']").fill("End to end test with broken locators."); // WRONG: correct is 'message'
+        page.locator("a[href='/contact_us']").first().click();
+        page.locator("input[data-qa='name']").fill(name);
+        page.locator("input[data-qa='email']").fill(email);
+        page.locator("input[data-qa='subject']").fill("Full Journey Test");
+        page.locator("textarea[data-qa='message']").fill("End to end test with broken locators.");
         page.onceDialog(dialog -> dialog.accept());
-        page.locator("input[data-qa='contact-submit']").click();             // WRONG: correct is 'submit-button'
+        page.locator("input[data-qa='submit-button']").click();
 
-        page.locator("div.success-message.alert-success").waitFor();         // WRONG: correct is .status.alert.alert-success
-        String successMsg = page.locator("div.success-message.alert-success").textContent().trim(); // WRONG: same
+        page.locator(".status.alert.alert-success").waitFor();
+        String successMsg = page.locator(".status.alert.alert-success").textContent().trim();
         Assert.assertTrue(successMsg.contains("Success! Your details have been submitted successfully."),
                 "Contact form should succeed. Got: " + successMsg);
 
         homePage.open();
-        page.locator("a[href='/remove_account']").click();                   // WRONG: correct is a[href='/delete_account']
-        page.locator("h2[data-qa='account-removed']").waitFor();             // WRONG: correct is 'account-deleted'
-        Assert.assertTrue(page.locator("h2[data-qa='account-removed']").innerText().contains("ACCOUNT DELETED"), // WRONG: same
+        page.locator("a[href='/delete_account']").click();
+        page.locator("h2[data-qa='account-deleted']").waitFor();
+        Assert.assertTrue(page.locator("h2[data-qa='account-deleted']").innerText().contains("ACCOUNT DELETED"),
                 "Account should be deleted.");
     }
 }
