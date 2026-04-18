@@ -65,7 +65,7 @@ public class HomePage {
     }
 
     public boolean isSubscriptionSuccessMessageVisible() {
-        return page.locator(".alert-success.alert").count() > 0
-                && page.locator(".alert-success.alert").first().isVisible();
+        com.microsoft.playwright.Locator successMessage = page.locator(".alert-success.alert");
+        return successMessage.count() > 0 && successMessage.first().isVisible();
     }
 }

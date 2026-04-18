@@ -158,8 +158,6 @@ public class PlaywrightTests extends BaseTest {
         productsPage.openProductDetailByIndex(0);
         productDetailPage.clickAddToCart();
         productDetailPage.clickViewCartFromPopup();
-        homePage.open();
-        homePage.clickCart();
 
         Assert.assertTrue(cartPage.isCartPageVisible(), "Cart page is not visible.");
         Assert.assertTrue(cartPage.getCartRowCount() > 0,
