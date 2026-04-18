@@ -156,8 +156,7 @@ jobs:
             }
             rerunCount++;
 
-            const 
-            RERUNS = 2;
+            const MAX_RERUNS = 2;
             if (rerunCount > MAX_RERUNS) {
               console.log(`Rerun limit reached (${MAX_RERUNS}). Skipping further reruns.`);
               return;

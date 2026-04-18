@@ -88,6 +88,53 @@ jobs:
           path: target/surefire-reports/testng-failed.xml
           if-no-files-found: ignore
 
+  report-success:
+    needs: run-tests
+    if: needs.run-tests.outputs.tests_failed != 'true' && github.event.inputs.rerun_count != '' && github.event.inputs.rerun_count != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - name: All Tests Passed - No Rerun Required
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.COPILOT_TOKEN }}
+          script: |
+            const rerunCount = '${{ github.event.inputs.rerun_count }}';
+            console.log(`✅ All tests passed on Rerun ${rerunCount}! No further reruns required.`);
+            console.log('The Copilot fix has been verified successfully.');
+
+            // Close the auto-test-failure issue if open
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'auto-test-failure',
+              state: 'open'
+            });
+
+            for (const issue of issues) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ **All tests passed on Rerun ${rerunCount}.** The fix has been verified. Closing this issue.`
+              });
+              console.log(`Closed issue #${issue.number} - fix verified.`);
+            }
+
+  report-no-rerun:
+    needs: run-tests
+    if: needs.run-tests.outputs.tests_failed != 'true' && (github.event.inputs.rerun_count == '' || github.event.inputs.rerun_count == '0')
+    runs-on: ubuntu-latest
+    steps:
+      - name: All Tests Passed
+        run: |
+          echo "✅ All tests passed! No issues to report. No rerun required."
+
   open-issue-and-assign-copilot:
     needs: run-tests
     if: needs.run-tests.outputs.tests_failed == 'true'
@@ -177,19 +224,52 @@ jobs:
           github-token: ${{ secrets.COPILOT_TOKEN }}
           script: |
             const issueNumber = Number('${{ steps.issue.outputs.issue_number }}');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
 
-            await github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              assignees: ['copilot-swe-agent[bot]'],
-              agent_assignment: {
-                target_repo: `${context.repo.owner}/${context.repo.repo}`,
-                base_branch: 'main'
-              },
-              headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
+            // Try multiple known Copilot bot names
+            const botNames = [
+              'copilot-swe-agent',
+              'copilot-swe-agent[bot]',
+              'copilot',
+              'copilot[bot]',
+              'github-copilot[bot]'
+            ];
+
+            let assigned = false;
+
+            for (const bot of botNames) {
+              try {
+                console.log(`Trying to assign "${bot}" to issue #${issueNumber}...`);
+                await github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                  assignees: [bot],
+                  agent_assignment: {
+                    target_repo: `${owner}/${repo}`,
+                    base_branch: 'main'
+                  },
+                  headers: {
+                    'X-GitHub-Api-Version': '2022-11-28'
+                  }
+                });
+                console.log(`Successfully assigned "${bot}" to issue #${issueNumber}.`);
+                assigned = true;
+                break;
+              } catch (e) {
+                console.log(`Failed with "${bot}": ${e.status} ${e.message}`);
               }
-            });
+            }
 
-            console.log(`Copilot coding agent assigned to issue #${issueNumber}. Waiting for Copilot to analyze and open a PR.`);
+            if (!assigned) {
+              // Fallback: add a comment mentioning @copilot to trigger it
+              console.log('Direct assignment failed. Adding @copilot mention as fallback...');
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body: '@copilot Please analyze the test failures in this issue, identify the root cause, fix the source code, and open a PR targeting the main branch.'
+              });
+              console.log(`Added @copilot mention comment on issue #${issueNumber}.`);
+            }
