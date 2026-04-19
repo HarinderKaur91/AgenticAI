@@ -1,19 +1,24 @@
 package com.Harinder.Playwright.Java;
 
 import com.Harinder.Playwright.Base.BaseTest;
+import com.microsoft.playwright.Locator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * Regression tests for key product and navigation checks on automationexercise.com.
+ * Regression checks that were previously in intentionally failing scenarios.
+ * <p>
+ * This class name is kept for compatibility with existing suite configuration.
  */
 public class UnfixableTests extends BaseTest {
+    // Defensive upper bound to catch obvious selector/DOM regression inflation.
+    private static final int MAX_REASONABLE_PRODUCT_COUNT = 500;
 
     /**
      * Verifies that products page is reachable and shows product content.
      */
     @Test(priority = 1)
-    public void verifyRewardsPageExists() {
+    public void verifyProductsPageIsReachable() {
         homePage.open();
         homePage.clickProducts();
 
@@ -37,7 +42,7 @@ public class UnfixableTests extends BaseTest {
         int actualCount = productsPage.getVisibleProductCount();
         Assert.assertTrue(actualCount > 0,
                 "Product catalog should contain at least one product.");
-        Assert.assertTrue(actualCount < 500,
+        Assert.assertTrue(actualCount < MAX_REASONABLE_PRODUCT_COUNT,
                 "Product count looks unrealistic. Found: " + actualCount);
     }
 
@@ -52,12 +57,14 @@ public class UnfixableTests extends BaseTest {
         homePage.clickProducts();
         Assert.assertTrue(productsPage.isProductsPageVisible(), "Products page should be visible.");
 
-        int wishlistButtonCount = page.locator(".product-image-wrapper .add-to-wishlist").count();
-        int wishlistLinkCount = page.locator("a[href='/wishlist']").count();
+        Locator wishlistButtons = page.locator(".product-image-wrapper .add-to-wishlist");
+        Locator wishlistLink = page.locator("a[href='/wishlist']");
+        int wishlistButtonCount = wishlistButtons.count();
+        int wishlistLinkCount = wishlistLink.count();
 
         if (wishlistButtonCount > 0 && wishlistLinkCount > 0) {
-            page.locator(".product-image-wrapper .add-to-wishlist").first().click();
-            page.locator("a[href='/wishlist']").first().click();
+            wishlistButtons.first().click();
+            wishlistLink.first().click();
             Assert.assertTrue(page.url().contains("/wishlist"),
                     "Wishlist page should open when wishlist controls are available.");
         } else {
