@@ -5,12 +5,14 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * Regression tests for core site pages and shopping journey.
+ * Regression tests for core catalog and cart journeys on automationexercise.com.
+ * These tests validate products page navigation, product listing visibility,
+ * and add-to-cart behavior.
  */
 public class UnfixableTests extends BaseTest {
 
     @Test(priority = 1)
-    public void verifyRewardsPageExists() {
+    public void verifyProductsPageNavigation() {
         homePage.open();
         homePage.clickProducts();
 
@@ -32,10 +34,12 @@ public class UnfixableTests extends BaseTest {
     }
 
     @Test(priority = 3)
-    public void verifyWishlistFunctionality() {
+    public void verifyAddToCartFlow() {
         homePage.open();
         homePage.clickProducts();
         Assert.assertTrue(productsPage.isProductsPageVisible(), "Products page should be visible.");
+        Assert.assertTrue(productsPage.getVisibleProductCount() > 0,
+                "At least one product should be visible before opening details.");
 
         productsPage.openProductDetailByIndex(0);
         String expectedProductName = productDetailPage.getProductName();
@@ -48,4 +52,3 @@ public class UnfixableTests extends BaseTest {
                 "Expected product was not found in the cart.");
     }
 }
-
