@@ -340,6 +340,8 @@
     <span class="flow-arrow">→</span>
     <div class="flow-box fb-blue">Run Full<br>Test Suite</div>
     <span class="flow-arrow">→</span>
+    <div class="flow-box fb-green">Email<br>Reports</div>
+    <span class="flow-arrow">→</span>
     <div class="flow-box fb-red">Failures<br>Detected?</div>
   </div>
   <div class="flow-diagram">
@@ -347,27 +349,36 @@
     <span class="flow-arrow">→</span>
     <div class="flow-box fb-purple">Assign Copilot<br>Agent</div>
     <span class="flow-arrow">→</span>
-    <div class="flow-box fb-purple">Agent Writes<br>Fix + PR</div>
+    <div class="flow-box fb-purple">Agent Creates<br>Fix PR</div>
     <span class="flow-arrow">→</span>
-    <div class="flow-box fb-orange">Human<br>Approves PR</div>
+    <div class="flow-box fb-orange">Human<br>Reviews PR</div>
   </div>
   <div class="flow-diagram">
-    <div class="flow-box fb-green">Auto-Merge<br>to Main</div>
+    <div class="flow-box fb-green">Approve →<br>Auto-Merge</div>
     <span class="flow-arrow">→</span>
-    <div class="flow-box fb-blue">Rerun Failed<br>Tests Only</div>
+    <div class="flow-box fb-blue">Rerun 1<br><small>Failed tests only</small></div>
     <span class="flow-arrow">→</span>
-    <div class="flow-box fb-green">Verified ✓<br>Issue Closed</div>
+    <div class="flow-box fb-green">Pass? ✓<br>Issue Closed</div>
   </div>
-  <div class="flow-diagram" style="margin-top: 10px;">
-    <div class="flow-box fb-red">Rerun Fails?</div>
+  <div class="flow-diagram">
+    <div class="flow-box fb-red">Rerun 1<br>Fails?</div>
     <span class="flow-arrow">→</span>
-    <div class="flow-box" style="background:#1a2a3d;color:#2684FF;border:1px solid #2684FF;">Escalate to<br>JIRA</div>
-    <span class="flow-arrow">&nbsp;&nbsp;</span>
+    <div class="flow-box fb-purple">Copilot<br>Retry</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box fb-blue">Rerun 2<br><small>Failed tests only</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box fb-green">Pass? ✓<br>Issue Closed</div>
+  </div>
+  <div class="flow-diagram">
+    <div class="flow-box fb-red">Rerun 2 Fails?</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#1a2a3d;color:#2684FF;border:1px solid #2684FF;">JIRA Task<br>Created</div>
+    <span class="flow-arrow">&nbsp;&nbsp;&nbsp;</span>
     <div class="flow-box fb-red">PR Rejected?</div>
     <span class="flow-arrow">→</span>
-    <div class="flow-box" style="background:#1a2a3d;color:#2684FF;border:1px solid #2684FF;">Escalate to<br>JIRA</div>
+    <div class="flow-box" style="background:#1a2a3d;color:#2684FF;border:1px solid #2684FF;">JIRA Task<br>Created</div>
   </div>
-  <p style="text-align: center; margin-top: 20px; color: #8b949e;">2 rerun cycles &nbsp;|&nbsp; Reruns only failed tests via <code>testng-failed.xml</code> &nbsp;|&nbsp; JIRA escalation on failure or PR rejection</p>
+  <p style="text-align: center; margin-top: 20px; color: #8b949e;">Max 2 reruns &nbsp;|  Failed tests only via <code>testng-failed.xml</code> &nbsp;|&nbsp; Email reports on every run</p>
   <div class="slide-number">3</div>
 </div>
 
@@ -753,6 +764,10 @@ pom.xml                        ← Dependencies</div>
       <p><code>daily-test-fix.yml</code> runs → <code>mvn clean test</code> → 8 tests fail</p>
     </div>
     <div class="timeline-item">
+      <div class="date">12:04 AM — Email report sent</div>
+      <p>ExtentReport + TestNG emailable report sent to team via Gmail SMTP</p>
+    </div>
+    <div class="timeline-item">
       <div class="date">12:05 AM — Issue created</div>
       <p>GitHub Issue #42 opened with failure logs, labeled <code>auto-test-failure</code></p>
     </div>
@@ -777,8 +792,20 @@ pom.xml                        ← Dependencies</div>
       <p>Dispatches <code>daily-test-fix.yml</code> with <code>rerun_count=1</code> → runs only failed tests</p>
     </div>
     <div class="timeline-item">
-      <div class="date">Result</div>
-      <p style="color: #3fb950; font-weight: 600;">✅ All tests pass → Issue closed with success comment → Framework healed itself</p>
+      <div class="date">Scenario A — Fix works</div>
+      <p style="color: #3fb950; font-weight: 600;">✅ All tests pass → Issue closed → JIRA transitioned to Done → Framework healed itself</p>
+    </div>
+    <div class="timeline-item" style="margin-top: 10px;">
+      <div class="date">Scenario B — Fix doesn't work</div>
+      <p style="color: #f0883e;">Rerun 1 fails → Copilot assigned again → creates new PR → approve & merge → Rerun 2</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Rerun 2 still fails</div>
+      <p style="color: #f85149; font-weight: 600;">❌ JIRA Task created (Highest priority, <code>retries-exhausted</code>) → GitHub issue labeled <code>needs-manual-fix</code></p>
+    </div>
+    <div class="timeline-item" style="margin-top: 10px;">
+      <div class="date">Scenario C — Bad fix (e.g. enabled=false)</div>
+      <p style="color: #f85149; font-weight: 600;">❌ Human closes PR without merging → JIRA Task created (<code>copilot-fix-rejected</code>) → Shortcut to escalation</p>
     </div>
   </div>
   <div class="slide-number">13</div>
@@ -999,39 +1026,36 @@ pom.xml                        ← Dependencies</div>
   
   <div class="grid-2">
     <div class="card">
-      <h3>Intelligent Escalation</h3>
+      <h3>Smarter JIRA Escalation</h3>
       <ul>
-        <li><strong>Separate JIRA per failure:</strong> If multiple unrelated tests fail, create individual JIRA tasks for each failure group instead of one combined task</li>
-        <li><strong>Flaky test detection:</strong> If a test passes on rerun without any code change, flag it as flaky rather than “fixed”</li>
-        <li><strong>Smart retry logic:</strong> Dynamically adjust retries based on failure type (locator vs logic vs missing feature)</li>
-        <li><strong>Duplicate JIRA prevention:</strong> Search for existing open JIRA before creating a new one on PR rejection path</li>
+        <li>Separate JIRA task per failed test</li>
+        <li>Include failed test names in JIRA description</li>
+        <li>Attach failure screenshots to JIRA</li>
+        <li>Detect and flag flaky tests</li>
       </ul>
     </div>
     <div class="card">
-      <h3>Notifications & Visibility</h3>
+      <h3>Notifications</h3>
       <ul>
-        <li><strong>Slack/Teams alerts:</strong> Notify team on failure, PR ready for review, JIRA escalation, and successful fix</li>
-        <li><strong>Screenshot in JIRA:</strong> Upload failure screenshots from ExtentReports directly to the JIRA task</li>
-        <li><strong>Auto-assign to sprint:</strong> Move new JIRA tasks from Backlog into the active sprint automatically</li>
-        <li><strong>Test summary on PR:</strong> Post pass/fail results as a comment on the Copilot PR for reviewers</li>
+        <li>Slack/Teams alerts on key events</li>
+        <li>Auto-assign JIRA to active sprint</li>
+        <li>Post test summary on Copilot PRs</li>
       </ul>
     </div>
     <div class="card">
       <h3>Agent Intelligence</h3>
       <ul>
-        <li><strong>Custom agent instructions:</strong> Pass failure category (locator, logic, missing page) to guide the agent’s fix approach</li>
-        <li><strong>Multi-PR support:</strong> Allow agent to create separate PRs for independent failures in the same run</li>
-        <li><strong>Confidence scoring:</strong> Agent rates its fix confidence — low-confidence fixes escalate directly</li>
-        <li><strong>Learning from rejections:</strong> Feed rejected PR context back into next agent attempt</li>
+        <li>Category-based fix instructions</li>
+        <li>Separate PRs per independent failure</li>
+        <li>Confidence scoring for fixes</li>
       </ul>
     </div>
     <div class="card">
       <h3>Infrastructure</h3>
       <ul>
-        <li><strong>Branch cleanup:</strong> Auto-delete Copilot feature branches after merge or PR close</li>
-        <li><strong>Parallel test execution:</strong> Run tests across multiple browsers simultaneously</li>
-        <li><strong>Dashboard:</strong> Aggregate view of healing cycles, success rate, JIRA tickets over time</li>
-        <li><strong>Config-driven thresholds:</strong> MAX_RERUNS, JIRA project, notification channels as repo-level config</li>
+        <li>Auto-delete stale feature branches</li>
+        <li>Parallel cross-browser execution</li>
+        <li>Healing cycle dashboard</li>
       </ul>
     </div>
   </div>
