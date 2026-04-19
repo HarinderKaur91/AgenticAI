@@ -89,7 +89,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Email Test Reports
-        if: always() && (github.event.inputs.rerun_count == '' || github.event.inputs.rerun_count == '0')
+        if: always()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
