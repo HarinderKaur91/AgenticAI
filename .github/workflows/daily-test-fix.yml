@@ -88,6 +88,32 @@ jobs:
           path: target/surefire-reports/testng-failed.xml
           if-no-files-found: ignore
 
+      - name: Email Test Reports
+        if: always() && (github.event.inputs.rerun_count == '' || github.event.inputs.rerun_count == '0')
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "Test Report — ${{ steps.run.outcome == 'failure' && 'FAILURES DETECTED ❌' || 'ALL PASSED ✅' }} — ${{ github.repository }}"
+          to: harinder.qa.88@gmail.com
+          from: Self-Healing Framework <${{ secrets.GMAIL_USERNAME }}>
+          body: |
+            Hi,
+
+            The daily test run has completed.
+
+            Status: ${{ steps.run.outcome }}
+            Repository: ${{ github.repository }}
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Reports are attached to this email.
+
+            — Self-Healing Test Framework
+          attachments: reports/*.html,target/surefire-reports/emailable-report.html
+
   report-success:
     needs: run-tests
     if: needs.run-tests.outputs.tests_failed != 'true'
