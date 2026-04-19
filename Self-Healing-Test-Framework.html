@@ -295,6 +295,7 @@
     <span class="badge badge-purple">GitHub Actions</span>
     <span class="badge badge-green">Copilot Agent</span>
     <span class="badge badge-orange">TestNG</span>
+    <span class="badge" style="background:#1a2a3d;color:#2684FF;">JIRA Integration</span>
   </div>
   <p class="meta" style="margin-top: 40px;">Built by Harinder Kaur &nbsp;|&nbsp; April 2026</p>
   <div class="slide-number">1</div>
@@ -357,7 +358,16 @@
     <span class="flow-arrow">→</span>
     <div class="flow-box fb-green">Verified ✓<br>Issue Closed</div>
   </div>
-  <p style="text-align: center; margin-top: 20px; color: #8b949e;">Maximum 2 rerun cycles &nbsp;|&nbsp; Reruns only failed tests via <code>testng-failed.xml</code></p>
+  <div class="flow-diagram" style="margin-top: 10px;">
+    <div class="flow-box fb-red">Rerun Fails?</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#1a2a3d;color:#2684FF;border:1px solid #2684FF;">Escalate to<br>JIRA</div>
+    <span class="flow-arrow">&nbsp;&nbsp;</span>
+    <div class="flow-box fb-red">PR Rejected?</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#1a2a3d;color:#2684FF;border:1px solid #2684FF;">Escalate to<br>JIRA</div>
+  </div>
+  <p style="text-align: center; margin-top: 20px; color: #8b949e;">2 rerun cycles &nbsp;|&nbsp; Reruns only failed tests via <code>testng-failed.xml</code> &nbsp;|&nbsp; JIRA escalation on failure or PR rejection</p>
   <div class="slide-number">3</div>
 </div>
 
@@ -436,14 +446,16 @@
       <div class="code-block">src/test/java/com/Harinder/Playwright/
 ├── Java/
 │   ├── PlaywrightTests.java        ← 18 tests
-│   └── ComplexPlaywrightTests.java ← 5 complex
+│   ├── ComplexPlaywrightTests.java ← 5 complex
+│   ├── LocatorChallengeTests.java  ← 7 locator tests
+│   └── UnfixableTests.java        ← 3 unfixable
 └── Utils/
     ├── TestListener.java      ← ExtentReport hooks
     └── TestDataUtil.java      ← Unique emails/names
 
 .github/workflows/
 ├── daily-test-fix.yml         ← Self-healing workflow
-└── auto-merge-copilot-pr.yml  ← Auto-merge + rerun
+└── auto-merge-copilot-pr.yml  ← Auto-merge + JIRA
 
 testng.xml                     ← Suite configuration
 pom.xml                        ← Dependencies</div>
@@ -473,11 +485,11 @@ pom.xml                        ← Dependencies</div>
       <h3>Job: open-issue-and-assign-copilot</h3>
       <ul>
         <li>Runs only IF tests failed</li>
-        <li>Downloads test report artifacts</li>
-        <li>Creates/updates GitHub issue with failure details</li>
+        <li>Closes stale issues, creates fresh one (new agent session)</li>
         <li>Labels: <code>bug</code>, <code>auto-test-failure</code></li>
-        <li>Assigns Copilot agent (tries 5 bot names)</li>
-        <li>Fallback: <code>@copilot</code> mention in comment</li>
+        <li>Initial run: assigns Copilot agent</li>
+        <li>On rerun failure: <strong>escalates to JIRA</strong> instead</li>
+        <li>Adds <code>needs-manual-fix</code> label on JIRA escalation</li>
       </ul>
     </div>
   </div>
@@ -487,6 +499,7 @@ pom.xml                        ← Dependencies</div>
     <ul>
       <li>Runs only IF tests passed</li>
       <li>On rerun: closes the <code>auto-test-failure</code> issue with success comment</li>
+      <li>On rerun: transitions linked JIRA to Done with resolution comment</li>
       <li>On initial run: prints "No rerun required"</li>
     </ul>
   </div>
@@ -496,28 +509,35 @@ pom.xml                        ← Dependencies</div>
 <!-- SLIDE 7: Workflow 2 — Auto Merge -->
 <div class="slide">
   <h2 class="slide-title">Workflow 2: auto-merge-copilot-pr.yml</h2>
-  <p style="margin-bottom: 20px;">Triggered when a human approves a Copilot-authored PR. Handles merge + rerun verification.</p>
+  <p style="margin-bottom: 20px;">Triggered on PR review events. Handles merge, rerun verification, and JIRA escalation on rejection.</p>
   
-  <div class="card">
-    <h3>Step 1: Merge Approved Copilot PR</h3>
-    <ul>
-      <li>Validates PR author is a Copilot bot (<code>copilot-swe-agent[bot]</code>, etc.)</li>
-      <li>Handles draft PRs → marks ready for review with polling (60s max)</li>
-      <li>Handles blocked state → enables auto-merge via GraphQL</li>
-      <li>Waits for mergeable state if unknown</li>
-      <li>Squash merges with descriptive commit message</li>
-      <li>Auto-closes the linked issue from PR body</li>
-    </ul>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Job: auto-merge (on Approval)</h3>
+      <ul>
+        <li>Validates PR author is a Copilot bot</li>
+        <li>Handles draft PRs → marks ready for review + polling</li>
+        <li>Handles blocked state → auto-merge via GraphQL</li>
+        <li>Squash merges with descriptive commit</li>
+        <li>Closes linked GitHub issue</li>
+        <li>Dispatches rerun with <code>rerun_count</code> (max <strong>2 reruns</strong>)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Job: escalate-rejected-pr (on Close)</h3>
+      <ul>
+        <li>Triggers when a Copilot PR is <strong>closed without merging</strong></li>
+        <li>Extracts linked issue number and failed test names</li>
+        <li>Creates a JIRA Task with priority <strong>Highest</strong></li>
+        <li>Labels: <code>copilot-fix-rejected</code></li>
+        <li>Adds <code>needs-manual-fix</code> label to GitHub issue</li>
+        <li>Comments on issue with escalation notice</li>
+      </ul>
+    </div>
   </div>
 
-  <div class="card" style="margin-top: 20px;">
-    <h3>Step 2: Trigger Test Rerun</h3>
-    <ul>
-      <li>Counts how many reruns have happened in the last 24 hours</li>
-      <li>Dispatches <code>daily-test-fix.yml</code> with incremented <code>rerun_count</code></li>
-      <li>Maximum <strong>2 reruns</strong> to prevent infinite loops</li>
-      <li>Run title shows "Rerun 1 — Verify Fix" or "Rerun 2 — Verify Fix"</li>
-    </ul>
+  <div class="highlight-box" style="margin-top: 20px; text-align: center;">
+    <p style="font-size: 18px;"><strong>Two paths:</strong> Approve → auto-merge + rerun &nbsp;|&nbsp; Close without merging → JIRA escalation</p>
   </div>
   <div class="slide-number">7</div>
 </div>
@@ -570,15 +590,17 @@ pom.xml                        ← Dependencies</div>
   <div class="grid-2">
     <div class="card">
       <h3>Assignment Strategy</h3>
-      <p>Tries 5 known bot names via REST API with <code>agent_assignment</code> payload:</p>
-      <div class="code-block" style="font-size: 13px;">const botNames = [
-  'copilot-swe-agent',
-  'copilot-swe-agent[bot]',
-  'copilot',
-  'copilot[bot]',
-  'github-copilot[bot]'
-];</div>
-      <p style="margin-top: 10px;">If all fail → fallback <code>@copilot</code> mention in issue comment.</p>
+      <p>Uses <code>gh api</code> with <code>agent_assignment</code> payload via stdin pipe:</p>
+      <div class="code-block" style="font-size: 13px;">printf '{"assignees":["copilot-swe-agent[bot]"],
+  "agent_assignment":{
+    "target_repo":"owner/repo",
+    "base_branch":"main",
+    "custom_instructions":"..."
+  }}' | gh api \
+  --method POST \
+  /repos/{owner}/{repo}/issues/{N}/assignees \
+  --input -</div>
+      <p style="margin-top: 10px;">Direct REST call avoids Octokit stripping <code>agent_assignment</code>.</p>
     </div>
     <div class="card">
       <h3>What the Agent Receives</h3>
@@ -636,22 +658,46 @@ pom.xml                        ← Dependencies</div>
 
 <!-- SLIDE 11: Test Scenarios -->
 <div class="slide">
-  <h2 class="slide-title">Test Scenarios: 23 Tests Across 2 Files</h2>
+  <h2 class="slide-title">Test Scenarios: 33 Tests Across 4 Files</h2>
   
-  <h3>PlaywrightTests.java — 18 Standard Tests</h3>
-  <table>
-    <tr><th>#</th><th>Test</th><th>Coverage</th></tr>
-    <tr><td>1</td><td>verifyHomePageLoads</td><td>Home page visibility</td></tr>
-    <tr><td>2</td><td>verifyTestCasesPageNavigation</td><td>Navigation + URL check</td></tr>
-    <tr><td>3</td><td>verifyProductsPageIsVisible</td><td>Products listing</td></tr>
-    <tr><td>4</td><td>verifySearchProduct</td><td>Search functionality</td></tr>
-    <tr><td>5</td><td>verifyFirstProductDetailPage</td><td>Product detail page</td></tr>
-    <tr><td>6</td><td>verifyAddSingleProductToCart</td><td>Add to cart + verify</td></tr>
-    <tr><td>7</td><td>verifyProductQuantityInCart</td><td>Cart quantity</td></tr>
-    <tr><td>8</td><td>verifySubscriptionOnHomePage</td><td>Email subscription</td></tr>
-    <tr><td>9–10</td><td>Contact Us + Full Auth Flow</td><td>Form submission, Register/Login/Logout/Delete</td></tr>
-    <tr><td>11–18</td><td>Cart, Search, Navigation, Login</td><td>Multi-step validations</td></tr>
-  </table>
+  <div class="grid-2">
+    <div class="card">
+      <h3>PlaywrightTests.java — 18 Tests</h3>
+      <ul>
+        <li>Home page, navigation, products, search</li>
+        <li>Cart operations, subscriptions</li>
+        <li>Contact Us, full auth flow</li>
+        <li>3 tests have intentional bugs (9, 10, 13)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>ComplexPlaywrightTests.java — 5 Tests</h3>
+      <ul>
+        <li>Layered, cascading, order-of-ops bugs</li>
+        <li>Cross-page state bugs</li>
+        <li>12 hidden bugs, no hint comments</li>
+        <li>Designed to stress-test Copilot agent</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>LocatorChallengeTests.java — 7 Tests</h3>
+      <ul>
+        <li>50+ broken locators per test</li>
+        <li>Wrong selectors, IDs, classes, attributes</li>
+        <li>Tests locator-fixing ability of agent</li>
+        <li>Every locator has <code>// WRONG</code> comment</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>UnfixableTests.java — 3 Tests</h3>
+      <ul>
+        <li>Pages/features that don't exist on the site</li>
+        <li>Impossible assertions (exact product count)</li>
+        <li>Agent <strong>cannot</strong> fix these → triggers JIRA</li>
+        <li>Validates the escalation path</li>
+      </ul>
+    </div>
+  </div>
   <div class="slide-number">11</div>
 </div>
 
@@ -748,6 +794,7 @@ pom.xml                        ← Dependencies</div>
       <ul>
         <li><strong>Human-in-the-loop:</strong> Agent creates PR, human must approve</li>
         <li><strong>Max 2 reruns:</strong> Prevents infinite fix-fail loops</li>
+        <li><strong>JIRA escalation:</strong> Auto-creates task when agent fix fails</li>
         <li><strong>Squash merge:</strong> Clean git history</li>
         <li><strong>COPILOT_TOKEN secret:</strong> Scoped permissions</li>
       </ul>
@@ -765,7 +812,7 @@ pom.xml                        ← Dependencies</div>
       <h3>Efficiency</h3>
       <ul>
         <li><strong>Failed-only reruns:</strong> Via testng-failed.xml</li>
-        <li><strong>Issue reuse:</strong> Updates existing issue vs creating new</li>
+        <li><strong>Fresh issues:</strong> Closes stale issue, creates new one per run for fresh agent session</li>
         <li><strong>Maven cache:</strong> Speeds up dependency resolution</li>
         <li><strong>Headless Chromium:</strong> No GUI overhead in CI</li>
       </ul>
@@ -824,6 +871,21 @@ pom.xml                        ← Dependencies</div>
       <td>automationexercise.com serves ads</td>
       <td>Force click + direct navigation fallback in ProductsPage</td>
     </tr>
+    <tr>
+      <td>Copilot ignores re-assignment</td>
+      <td>Re-assigning same issue doesn't start new agent session</td>
+      <td>Close old issue, create fresh one each run</td>
+    </tr>
+    <tr>
+      <td>JIRA "Specify valid issue type"</td>
+      <td>Team-managed projects don't have "Bug" type</td>
+      <td>Changed to "Task" + proper ADF description format</td>
+    </tr>
+    <tr>
+      <td>Copilot agent_assignment stripped</td>
+      <td>Octokit drops unknown fields from request body</td>
+      <td>Switched from Octokit to <code>printf | gh api --input -</code></td>
+    </tr>
   </table>
   <div class="slide-number">15</div>
 </div>
@@ -834,7 +896,7 @@ pom.xml                        ← Dependencies</div>
   
   <div class="stat-grid">
     <div class="stat-box">
-      <div class="number">23</div>
+      <div class="number">33</div>
       <div class="label">Test Cases</div>
     </div>
     <div class="stat-box">
@@ -852,20 +914,20 @@ pom.xml                        ← Dependencies</div>
   </div>
   <div class="stat-grid">
     <div class="stat-box">
-      <div class="number">12</div>
+      <div class="number">62+</div>
       <div class="label">Hidden Bugs</div>
     </div>
     <div class="stat-box">
-      <div class="number">5</div>
-      <div class="label">Bug Patterns</div>
+      <div class="number">4</div>
+      <div class="label">Test Files</div>
     </div>
     <div class="stat-box">
-      <div class="number">30+</div>
-      <div class="label">PRs Merged</div>
+      <div class="number">2</div>
+      <div class="label">JIRA Paths</div>
     </div>
     <div class="stat-box">
-      <div class="number">0</div>
-      <div class="label">Manual Fix Needed</div>
+      <div class="number">3</div>
+      <div class="label">Unfixable Tests</div>
     </div>
   </div>
 
@@ -876,7 +938,107 @@ pom.xml                        ← Dependencies</div>
   <div class="slide-number">16</div>
 </div>
 
-<!-- SLIDE 17: Repository -->
+<!-- SLIDE 17: JIRA Integration -->
+<div class="slide">
+  <h2 class="slide-title">JIRA Integration: Auto-Escalation</h2>
+  
+  <div class="grid-2">
+    <div class="card">
+      <h3>Path 1: Rerun Fails (Retries Exhausted)</h3>
+      <div class="flow-diagram" style="justify-content: flex-start;">
+        <div class="flow-box fb-red" style="min-width:100px;font-size:13px;">Rerun<br>Fails</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box" style="min-width:100px;font-size:13px;background:#1a2a3d;color:#2684FF;border:1px solid #2684FF;">JIRA Task<br>Created</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box fb-orange" style="min-width:100px;font-size:13px;">GitHub Issue<br>Labeled</div>
+      </div>
+      <ul>
+        <li>Triggered in <code>daily-test-fix.yml</code></li>
+        <li>Condition: <code>rerun_count ≥ 1</code> and tests still failing</li>
+        <li>Creates JIRA Task with full failure details</li>
+        <li>Labels: <code>retries-exhausted</code></li>
+        <li>Adds <code>needs-manual-fix</code> to GitHub issue</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Path 2: PR Closed Without Merging</h3>
+      <div class="flow-diagram" style="justify-content: flex-start;">
+        <div class="flow-box fb-red" style="min-width:100px;font-size:13px;">PR<br>Rejected</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box" style="min-width:100px;font-size:13px;background:#1a2a3d;color:#2684FF;border:1px solid #2684FF;">JIRA Task<br>Created</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box fb-orange" style="min-width:100px;font-size:13px;">GitHub Issue<br>Labeled</div>
+      </div>
+      <ul>
+        <li>Triggered in <code>auto-merge-copilot-pr.yml</code></li>
+        <li>Condition: Copilot PR closed, <code>merged == false</code></li>
+        <li>Creates JIRA Task with PR context</li>
+        <li>Labels: <code>copilot-fix-rejected</code></li>
+        <li>Comments on issue with escalation notice</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top: 20px;">
+    <h3 style="margin-top: 0;">JIRA Task Details</h3>
+    <table style="margin: 10px 0;">
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Issue Type</td><td><code>Task</code></td></tr>
+      <tr><td>Priority</td><td>Highest</td></tr>
+      <tr><td>Description</td><td>ADF format with PR/issue links, failure details, action required</td></tr>
+      <tr><td>Labels</td><td><code>auto-test-failure</code>, <code>self-healing-framework</code>, + path-specific label</td></tr>
+      <tr><td>Auto-Close</td><td>On successful rerun, JIRA transitions to Done</td></tr>
+    </table>
+  </div>
+  <div class="slide-number">17</div>
+</div>
+
+<!-- SLIDE 18: Future Work -->
+<div class="slide">
+  <h2 class="slide-title">Future Work</h2>
+  
+  <div class="grid-2">
+    <div class="card">
+      <h3>Intelligent Escalation</h3>
+      <ul>
+        <li><strong>Separate JIRA per failure:</strong> If multiple unrelated tests fail, create individual JIRA tasks for each failure group instead of one combined task</li>
+        <li><strong>Flaky test detection:</strong> If a test passes on rerun without any code change, flag it as flaky rather than “fixed”</li>
+        <li><strong>Smart retry logic:</strong> Dynamically adjust retries based on failure type (locator vs logic vs missing feature)</li>
+        <li><strong>Duplicate JIRA prevention:</strong> Search for existing open JIRA before creating a new one on PR rejection path</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Notifications & Visibility</h3>
+      <ul>
+        <li><strong>Slack/Teams alerts:</strong> Notify team on failure, PR ready for review, JIRA escalation, and successful fix</li>
+        <li><strong>Screenshot in JIRA:</strong> Upload failure screenshots from ExtentReports directly to the JIRA task</li>
+        <li><strong>Auto-assign to sprint:</strong> Move new JIRA tasks from Backlog into the active sprint automatically</li>
+        <li><strong>Test summary on PR:</strong> Post pass/fail results as a comment on the Copilot PR for reviewers</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Agent Intelligence</h3>
+      <ul>
+        <li><strong>Custom agent instructions:</strong> Pass failure category (locator, logic, missing page) to guide the agent’s fix approach</li>
+        <li><strong>Multi-PR support:</strong> Allow agent to create separate PRs for independent failures in the same run</li>
+        <li><strong>Confidence scoring:</strong> Agent rates its fix confidence — low-confidence fixes escalate directly</li>
+        <li><strong>Learning from rejections:</strong> Feed rejected PR context back into next agent attempt</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Infrastructure</h3>
+      <ul>
+        <li><strong>Branch cleanup:</strong> Auto-delete Copilot feature branches after merge or PR close</li>
+        <li><strong>Parallel test execution:</strong> Run tests across multiple browsers simultaneously</li>
+        <li><strong>Dashboard:</strong> Aggregate view of healing cycles, success rate, JIRA tickets over time</li>
+        <li><strong>Config-driven thresholds:</strong> MAX_RERUNS, JIRA project, notification channels as repo-level config</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-number">18</div>
+</div>
+
+<!-- SLIDE 19: Repository -->
 <div class="slide title-slide">
   <h1>Thank You</h1>
   <h2 style="font-size: 24px;">Self-Healing Test Framework with GitHub Copilot Agent</h2>
@@ -884,12 +1046,12 @@ pom.xml                        ← Dependencies</div>
     <span class="badge badge-blue">github.com/HarinderKaur91/AgenticAI</span>
   </div>
   <p class="meta" style="margin-top: 40px;">
-    Playwright Java &nbsp;•&nbsp; TestNG &nbsp;•&nbsp; GitHub Actions &nbsp;•&nbsp; Copilot Agent &nbsp;•&nbsp; ExtentReports
+    Playwright Java &nbsp;•&nbsp; TestNG &nbsp;•&nbsp; GitHub Actions &nbsp;•&nbsp; Copilot Agent &nbsp;•&nbsp; JIRA &nbsp;•&nbsp; ExtentReports
   </p>
   <p class="meta" style="margin-top: 16px; color: #484f58;">
     Built by Harinder Kaur &nbsp;|&nbsp; April 2026
   </p>
-  <div class="slide-number">17</div>
+  <div class="slide-number">19</div>
 </div>
 
 </body>
