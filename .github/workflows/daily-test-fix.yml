@@ -400,7 +400,7 @@ jobs:
                       version: 1,
                       content: [{ type: "paragraph", content: [{ type: "text", text: descriptionText }] }]
                     },
-                    issuetype: { name: "Bug" },
+                    issuetype: { name: "Task" },
                     labels: ["auto-test-failure", "self-healing-framework", "retries-exhausted"],
                     priority: { name: "Highest" }
                   }
