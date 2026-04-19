@@ -547,8 +547,10 @@ pom.xml                        ← Dependencies</div>
     </div>
   </div>
 
-  <div class="highlight-box" style="margin-top: 20px; text-align: center;">
-    <p style="font-size: 18px;"><strong>Two paths:</strong> Approve → auto-merge + rerun &nbsp;|&nbsp; Close without merging → JIRA escalation</p>
+  <div class="highlight-box" style="margin-top: 20px;">
+    <p style="font-size: 17px; text-align: center; margin-bottom: 10px;"><strong>JIRA Escalation — Two Paths:</strong></p>
+    <p style="font-size: 15px; text-align: center; margin: 4px 0;">1️⃣ PR closed without merging → JIRA Task created <em>(auto-merge-copilot-pr.yml)</em></p>
+    <p style="font-size: 15px; text-align: center; margin: 4px 0;">2️⃣ Rerun 2 still fails → JIRA Task created <em>(daily-test-fix.yml)</em></p>
   </div>
   <div class="slide-number">7</div>
 </div>
@@ -634,40 +636,7 @@ pom.xml                        ← Dependencies</div>
   <div class="slide-number">9</div>
 </div>
 
-<!-- SLIDE 10: ExtentReports -->
-<div class="slide">
-  <h2 class="slide-title">Reporting: ExtentReports + Screenshots</h2>
-  
-  <div class="grid-2">
-    <div class="card">
-      <h3>ExtentReportManager.java</h3>
-      <ul>
-        <li>Thread-safe: <code>ThreadLocal&lt;ExtentTest&gt;</code></li>
-        <li>Timestamped HTML reports in <code>reports/</code> directory</li>
-        <li>Captures system info: OS, Java version, browser, headless mode</li>
-        <li>Flushed on suite completion</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>TestListener.java Integration</h3>
-      <ul>
-        <li><code>onTestStart</code>: Creates ExtentTest per method</li>
-        <li><code>onTestSuccess</code>: Logs PASS with duration</li>
-        <li><code>onTestFailure</code>: Logs FAIL + exception + Base64 screenshot</li>
-        <li><code>onTestSkipped</code>: Logs SKIP</li>
-        <li><code>onFinish</code>: Flushes report to HTML</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="highlight-box" style="margin-top: 20px;">
-    <h3 style="margin-top: 0;">Screenshot on Failure</h3>
-    <p>When a test fails, a full-page screenshot is captured as Base64 and embedded directly into the ExtentReport HTML — no external file dependencies. Reports are uploaded as GitHub Actions artifacts for download.</p>
-  </div>
-  <div class="slide-number">10</div>
-</div>
-
-<!-- SLIDE 11: Test Scenarios -->
+<!-- SLIDE 10: Test Scenarios -->
 <div class="slide">
   <h2 class="slide-title">Test Scenarios: 33 Tests Across 4 Files</h2>
   
@@ -709,10 +678,10 @@ pom.xml                        ← Dependencies</div>
       </ul>
     </div>
   </div>
-  <div class="slide-number">11</div>
+  <div class="slide-number">10</div>
 </div>
 
-<!-- SLIDE 12: Complex Test Scenarios -->
+<!-- SLIDE 11: Complex Test Scenarios -->
 <div class="slide">
   <h2 class="slide-title">ComplexPlaywrightTests.java — Agent Stress Tests</h2>
   <p style="margin-bottom: 20px;">5 brutally complex scenarios designed to stress-test the Copilot agent's debugging ability.</p>
@@ -751,10 +720,10 @@ pom.xml                        ← Dependencies</div>
     </tr>
   </table>
   <p style="margin-top: 16px; color: #8b949e; text-align: center;"><strong>12 hidden bugs</strong> across 5 tests — no hint comments in code</p>
-  <div class="slide-number">12</div>
+  <div class="slide-number">11</div>
 </div>
 
-<!-- SLIDE 13: Complete End-to-End Flow -->
+<!-- SLIDE 12: Complete End-to-End Flow -->
 <div class="slide">
   <h2 class="slide-title">End-to-End Flow: A Real Cycle</h2>
   
@@ -808,10 +777,10 @@ pom.xml                        ← Dependencies</div>
       <p style="color: #f85149; font-weight: 600;">❌ Human closes PR without merging → JIRA Task created (<code>copilot-fix-rejected</code>) → Shortcut to escalation</p>
     </div>
   </div>
-  <div class="slide-number">13</div>
+  <div class="slide-number">12</div>
 </div>
 
-<!-- SLIDE 14: Key Design Decisions -->
+<!-- SLIDE 13: Key Design Decisions -->
 <div class="slide">
   <h2 class="slide-title">Key Design Decisions</h2>
   
@@ -854,10 +823,10 @@ pom.xml                        ← Dependencies</div>
       </ul>
     </div>
   </div>
-  <div class="slide-number">14</div>
+  <div class="slide-number">13</div>
 </div>
 
-<!-- SLIDE 15: Challenges & Solutions -->
+<!-- SLIDE 14: Challenges & Solutions -->
 <div class="slide">
   <h2 class="slide-title">Challenges Faced & Resolved</h2>
   
@@ -914,10 +883,10 @@ pom.xml                        ← Dependencies</div>
       <td>Switched from Octokit to <code>printf | gh api --input -</code></td>
     </tr>
   </table>
-  <div class="slide-number">15</div>
+  <div class="slide-number">14</div>
 </div>
 
-<!-- SLIDE 16: Stats -->
+<!-- SLIDE 15: Stats -->
 <div class="slide">
   <h2 class="slide-title">Framework at a Glance</h2>
   
@@ -962,10 +931,10 @@ pom.xml                        ← Dependencies</div>
     <p style="font-size: 24px; font-weight: 700;">From <span style="color: #f85149;">test failure</span> to <span style="color: #3fb950;">verified fix</span> — fully autonomous</p>
     <p style="font-size: 16px; color: #8b949e; margin-top: 8px;">Only human intervention: reviewing and approving the PR</p>
   </div>
-  <div class="slide-number">16</div>
+  <div class="slide-number">15</div>
 </div>
 
-<!-- SLIDE 17: JIRA Integration -->
+<!-- SLIDE 16: JIRA Integration -->
 <div class="slide">
   <h2 class="slide-title">JIRA Integration: Auto-Escalation</h2>
   
@@ -1017,10 +986,10 @@ pom.xml                        ← Dependencies</div>
       <tr><td>Auto-Close</td><td>On successful rerun, JIRA transitions to Done</td></tr>
     </table>
   </div>
-  <div class="slide-number">17</div>
+  <div class="slide-number">16</div>
 </div>
 
-<!-- SLIDE 18: Future Work -->
+<!-- SLIDE 17: Future Work -->
 <div class="slide">
   <h2 class="slide-title">Future Work</h2>
   
@@ -1059,10 +1028,10 @@ pom.xml                        ← Dependencies</div>
       </ul>
     </div>
   </div>
-  <div class="slide-number">18</div>
+  <div class="slide-number">17</div>
 </div>
 
-<!-- SLIDE 19: Repository -->
+<!-- SLIDE 18: Repository -->
 <div class="slide title-slide">
   <h1>Thank You</h1>
   <h2 style="font-size: 24px;">Self-Healing Test Framework with GitHub Copilot Agent</h2>
@@ -1075,7 +1044,7 @@ pom.xml                        ← Dependencies</div>
   <p class="meta" style="margin-top: 16px; color: #484f58;">
     Built by Harinder Kaur &nbsp;|&nbsp; April 2026
   </p>
-  <div class="slide-number">19</div>
+  <div class="slide-number">18</div>
 </div>
 
 </body>
