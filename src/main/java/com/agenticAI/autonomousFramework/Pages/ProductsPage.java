@@ -1,5 +1,5 @@
-package com.Harinder.Playwright.Pages;
-import com.Harinder.Playwright.Utils.LoggerUtil;
+package com.agenticAI.autonomousFramework.Pages;
+import com.agenticAI.autonomousFramework.Utils.LoggerUtil;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.PlaywrightException;

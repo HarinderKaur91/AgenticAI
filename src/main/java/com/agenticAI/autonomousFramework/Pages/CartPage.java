@@ -1,4 +1,4 @@
-package com.Harinder.Playwright.Pages;
+package com.agenticAI.autonomousFramework.Pages;
 import com.microsoft.playwright.Page;
 import java.util.ArrayList;
 import java.util.List;

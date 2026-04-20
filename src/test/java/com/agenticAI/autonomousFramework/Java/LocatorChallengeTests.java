@@ -1,7 +1,7 @@
-package com.Harinder.Playwright.Java;
+package com.agenticAI.autonomousFramework.Java;
 
-import com.Harinder.Playwright.Base.BaseTest;
-import com.Harinder.Playwright.Utils.TestDataUtil;
+import com.agenticAI.autonomousFramework.Base.BaseTest;
+import com.agenticAI.autonomousFramework.Utils.TestDataUtil;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.TimeoutError;
 import org.testng.Assert;

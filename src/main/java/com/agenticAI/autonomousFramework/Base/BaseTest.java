@@ -1,8 +1,8 @@
-package com.Harinder.Playwright.Base;
+package com.agenticAI.autonomousFramework.Base;
 
 import com.microsoft.playwright.*;
-import com.Harinder.Playwright.Pages.*;
-import com.Harinder.Playwright.Utils.LoggerUtil;
+import com.agenticAI.autonomousFramework.Pages.*;
+import com.agenticAI.autonomousFramework.Utils.LoggerUtil;
 import org.testng.annotations.*;
 
 public class BaseTest {

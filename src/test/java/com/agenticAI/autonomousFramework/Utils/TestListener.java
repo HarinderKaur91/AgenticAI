@@ -1,4 +1,4 @@
-package com.Harinder.Playwright.Utils;
+package com.agenticAI.autonomousFramework.Utils;
 
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.MediaEntityBuilder;

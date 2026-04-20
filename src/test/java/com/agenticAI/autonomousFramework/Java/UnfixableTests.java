@@ -1,6 +1,6 @@
-package com.Harinder.Playwright.Java;
+package com.agenticAI.autonomousFramework.Java;
 
-import com.Harinder.Playwright.Base.BaseTest;
+import com.agenticAI.autonomousFramework.Base.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
