@@ -5,9 +5,9 @@
     </listeners>
     <test name="AutomationExercise Tests">
         <classes>
-            <!-- <class name="com.Harinder.Playwright.Java.PlaywrightTests"/> -->
-            <!-- <class name="com.Harinder.Playwright.Java.ComplexPlaywrightTests"/> -->
-            <!-- <class name="com.Harinder.Playwright.Java.LocatorChallengeTests"/> -->
+            <!-- <class name="com.agenticAI.autonomousFramework.Java.PlaywrightTests"/> -->
+            <!-- <class name="com.agenticAI.autonomousFramework.Java.ComplexPlaywrightTests"/> -->
+            <!-- <class name="com.agenticAI.autonomousFramework.Java.LocatorChallengeTests"/> -->
             <class name="com.agenticAI.autonomousFramework.Java.UnfixableTests"/>
         </classes>
     </test>
