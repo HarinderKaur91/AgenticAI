@@ -2,20 +2,23 @@ package com.agenticAI.autonomousFramework.Pages;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.PlaywrightException;
+import com.agenticAI.autonomousFramework.Config.AppConfig;
+import com.agenticAI.autonomousFramework.Enums.NavigationTarget;
 import com.agenticAI.autonomousFramework.Utils.LoggerUtil;
 
 public class HomePage {
 
     private final Page page;
-    private static final String BASE_URL = "https://automationexercise.com";
+    private final String baseUrl;
 
     public HomePage(Page page) {
         this.page = page;
+        this.baseUrl = AppConfig.get().baseUrl();
     }
 
     public void open() {
-        LoggerUtil.info("Navigating to: " + BASE_URL);
-        page.navigate(BASE_URL);
+        LoggerUtil.info("Navigating to: " + baseUrl);
+        page.navigate(baseUrl);
         LoggerUtil.info("Home page opened successfully");
     }
 
@@ -31,11 +34,12 @@ public class HomePage {
         productsLink.waitFor();
         try {
             productsLink.click();
-            page.waitForURL("**/products", new Page.WaitForURLOptions().setTimeout(10000));
+            page.waitForURL("**" + NavigationTarget.PRODUCTS.path(),
+                    new Page.WaitForURLOptions().setTimeout(10000));
         } catch (PlaywrightException ex) {
             LoggerUtil.warn("Products link click did not navigate; falling back to direct navigation.");
-            page.navigate(BASE_URL + "/products");
-            page.waitForURL("**/products");
+            page.navigate(baseUrl + NavigationTarget.PRODUCTS.path());
+            page.waitForURL("**" + NavigationTarget.PRODUCTS.path());
         }
     }
 
@@ -51,7 +55,7 @@ public class HomePage {
 
     public void clickTestCases() {
         LoggerUtil.info("Navigating to Test Cases page");
-        page.navigate(BASE_URL + "/test_cases");
+        page.navigate(baseUrl + NavigationTarget.TEST_CASES.path());
     }
 
     public void clickCart() {
