@@ -1,5 +1,7 @@
 package com.agenticAI.autonomousFramework.Java;
+import com.agenticAI.autonomousFramework.Annotations.JiraTestMeta;
 import com.agenticAI.autonomousFramework.Base.BaseTest;
+import com.agenticAI.autonomousFramework.Enums.TestSeverity;
 import com.agenticAI.autonomousFramework.Utils.TestDataUtil;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -8,13 +10,17 @@ import java.util.List;
 
 public class PlaywrightTests extends BaseTest {
 
-    @Test(priority = 1)
+    @Test(priority = 1, description = "Home page loads and key nav is visible")
+    @JiraTestMeta(jira = "AAF-10", zephyr = "AAF-T1", story = "Home page is reachable",
+            severity = TestSeverity.CRITICAL)
     public void verifyHomePageLoads() {
         homePage.open();
         Assert.assertTrue(homePage.isHomePageVisible(), "Home page should be visible after navigation.");
     }
 
-    @Test(priority = 2)
+    @Test(priority = 2, description = "Test Cases page is reachable from the home page")
+    @JiraTestMeta(jira = "AAF-10", zephyr = "AAF-T2", story = "Home page is reachable",
+            severity = TestSeverity.MAJOR)
     public void verifyTestCasesPageNavigation() {
         homePage.open();
         homePage.clickTestCases();
@@ -22,7 +28,9 @@ public class PlaywrightTests extends BaseTest {
                 "User should be on test cases page but URL is: " + page.url());
     }
 
-    @Test(priority = 3)
+    @Test(priority = 3, description = "Products catalog renders with at least one product")
+    @JiraTestMeta(jira = "AAF-11", zephyr = "AAF-T3", story = "Products catalog displays items",
+            severity = TestSeverity.CRITICAL)
     public void verifyProductsPageIsVisible() {
         homePage.open();
         homePage.clickProducts();
@@ -30,7 +38,9 @@ public class PlaywrightTests extends BaseTest {
         Assert.assertTrue(productsPage.getVisibleProductCount() > 0, "Products should be displayed on the page.");
     }
 
-    @Test(priority = 4)
+    @Test(priority = 4, description = "Catalog search returns matching results")
+    @JiraTestMeta(jira = "AAF-13", zephyr = "AAF-T4", story = "User can search the catalog",
+            severity = TestSeverity.MAJOR)
     public void verifySearchProduct() {
         homePage.open();
         homePage.clickProducts();
@@ -42,7 +52,9 @@ public class PlaywrightTests extends BaseTest {
                 "Search results should be displayed for valid product search.");
     }
 
-    @Test(priority = 5)
+    @Test(priority = 5, description = "Product detail page renders for the first product")
+    @JiraTestMeta(jira = "AAF-11", zephyr = "AAF-T5", story = "Products catalog displays items",
+            severity = TestSeverity.MAJOR)
     public void verifyFirstProductDetailPage() {
         homePage.open();
         homePage.clickProducts();

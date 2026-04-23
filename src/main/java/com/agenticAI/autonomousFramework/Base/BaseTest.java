@@ -1,16 +1,23 @@
 package com.agenticAI.autonomousFramework.Base;
 
 import com.microsoft.playwright.*;
+import com.agenticAI.autonomousFramework.Config.AppConfig;
+import com.agenticAI.autonomousFramework.Enums.BrowserType;
 import com.agenticAI.autonomousFramework.Pages.*;
 import com.agenticAI.autonomousFramework.Utils.LoggerUtil;
+import org.testng.ITestResult;
 import org.testng.annotations.*;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class BaseTest {
-    
+
     protected Playwright playwright;
     protected Browser browser;
     protected BrowserContext context;
     protected Page page;
+    protected AppConfig cfg;
 
     protected HomePage homePage;
     protected LoginPage loginPage;
@@ -20,45 +27,54 @@ public class BaseTest {
     protected ContactUsPage contactUsPage;
 
     @BeforeClass
-    public void setUpClass() {  
-        LoggerUtil.info("Initializing Playwright and Browser...");
+    public void setUpClass() {
+        cfg = AppConfig.get();
+        LoggerUtil.info("Initializing Playwright. env=" + cfg.environment()
+                + " browser=" + cfg.browser() + " headless=" + cfg.headless()
+                + " baseUrl=" + cfg.baseUrl());
         playwright = Playwright.create();
 
-        boolean headless = Boolean.parseBoolean(System.getProperty("headless", "true"));
-        String browserName = System.getProperty("browser", "chromium");
-        LoggerUtil.info("Browser: " + browserName + " | Headless: " + headless);
-
-        BrowserType browserType;
-        switch (browserName.toLowerCase()) {
-            case "firefox":
-                browserType = playwright.firefox();
-                break;
-            case "webkit":
-                browserType = playwright.webkit();
-                break;
-            default:
-                browserType = playwright.chromium();
+        com.microsoft.playwright.BrowserType browserType;
+        BrowserType configured = cfg.browser();
+        switch (configured) {
+            case FIREFOX: browserType = playwright.firefox(); break;
+            case WEBKIT:  browserType = playwright.webkit();  break;
+            case CHROMIUM:
+            default:      browserType = playwright.chromium();
         }
 
-        browser = browserType.launch(new BrowserType.LaunchOptions()
-                .setHeadless(headless)
-                .setSlowMo(100)
-                .setArgs(java.util.Arrays.asList(
-                        "--blink-settings=imagesEnabled=false",
-                        "--disable-extensions"
-                )));
-        LoggerUtil.info("Browser launched successfully");
+        browser = browserType.launch(new com.microsoft.playwright.BrowserType.LaunchOptions()
+                .setHeadless(cfg.headless())
+                .setSlowMo(cfg.slowMoMs()));
+        LoggerUtil.info("Browser launched: " + configured);
     }
 
     @BeforeMethod
-    public void setUpTest() {
+    public void setUpTest(ITestResult result) {
+        String testName = result.getMethod().getMethodName();
+        LoggerUtil.startTestContext(testName, cfg.environment().name(), cfg.browser().name());
         LoggerUtil.info("Setting up test context and pages...");
-        context = browser.newContext(new Browser.NewContextOptions()
-                .setViewportSize(1440, 900));
+
+        Browser.NewContextOptions ctxOpts = new Browser.NewContextOptions()
+                .setViewportSize(cfg.viewportWidth(), cfg.viewportHeight());
+
+        if (cfg.videoOnFailure()) {
+            ctxOpts.setRecordVideoDir(Paths.get("reports", "videos"));
+        }
+
+        context = browser.newContext(ctxOpts);
+
+        if (cfg.traceOnFailure()) {
+            context.tracing().start(new Tracing.StartOptions()
+                    .setScreenshots(true)
+                    .setSnapshots(true)
+                    .setSources(true)
+                    .setTitle(testName));
+        }
+
         page = context.newPage();
-        // Increase page timeout to handle slow ad iframes
-        page.setDefaultTimeout(60000);
-        page.setDefaultNavigationTimeout(60000);
+        page.setDefaultTimeout(cfg.defaultTimeoutMs());
+        page.setDefaultNavigationTimeout(cfg.navigationTimeoutMs());
 
         homePage = new HomePage(page);
         loginPage = new LoginPage(page);
@@ -69,24 +85,36 @@ public class BaseTest {
         LoggerUtil.info("Test context setup complete");
     }
 
-    @AfterMethod
-    public void tearDownTest() {
-        LoggerUtil.info("Tearing down test context...");
-        if (context != null) {
-            context.close();
+    @AfterMethod(alwaysRun = true)
+    public void tearDownTest(ITestResult result) {
+        try {
+            if (context != null) {
+                if (cfg.traceOnFailure() && result.getStatus() == ITestResult.FAILURE) {
+                    Path tracePath = Paths.get("reports", "traces",
+                            result.getMethod().getMethodName() + "-" + System.currentTimeMillis() + ".zip");
+                    tracePath.getParent().toFile().mkdirs();
+                    try {
+                        context.tracing().stop(new Tracing.StopOptions().setPath(tracePath));
+                        LoggerUtil.info("Playwright trace saved: " + tracePath.toAbsolutePath());
+                    } catch (Exception e) {
+                        LoggerUtil.warn("Failed to stop tracing: " + e.getMessage());
+                    }
+                } else if (cfg.traceOnFailure()) {
+                    try { context.tracing().stop(); } catch (Exception ignored) {}
+                }
+                context.close();
+            }
+        } finally {
+            LoggerUtil.info("Test context closed");
+            LoggerUtil.clearTestContext();
         }
-        LoggerUtil.info("Test context closed");
     }
 
-    @AfterClass
+    @AfterClass(alwaysRun = true)
     public void tearDownClass() {
         LoggerUtil.info("Closing browser and Playwright...");
-        if (browser != null) {
-            browser.close();
-        }
-        if (playwright != null) {
-            playwright.close();
-        }
+        if (browser != null) browser.close();
+        if (playwright != null) playwright.close();
         LoggerUtil.info("Browser and Playwright closed - Test suite complete");
     }
 }

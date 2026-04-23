@@ -1,0 +1,26 @@
+{
+  "$schema": "https://aka.ms/vscode-mcp.schema.json",
+  "servers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "type": "stdio"
+    },
+    "atlassian": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/sse"],
+      "type": "stdio",
+      "env": {
+        "ATLASSIAN_API_TOKEN": "${input:atlassian_token}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "atlassian_token",
+      "type": "promptString",
+      "description": "Atlassian API token (leave empty to disable Jira MCP)",
+      "password": true
+    }
+  ]
+}

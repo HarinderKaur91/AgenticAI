@@ -1,0 +1,73 @@
+name: Sync Zephyr test cases (scaffold)
+
+# SCAFFOLD ONLY -- enable this workflow once the JIRA/ZEPHYR project
+# exists and ZEPHYR_API_TOKEN + JIRA_USER_EMAIL secrets are configured.
+# It pulls test cases from Zephyr Scale and rewrites
+# docs/zephyr/test-cases.md, then opens a PR if there are changes.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"   # daily at 03:00 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    if: ${{ vars.ENABLE_ZEPHYR_SYNC == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          if [ -z "${{ secrets.ZEPHYR_API_TOKEN }}" ]; then
+            echo "::error::ZEPHYR_API_TOKEN secret is not set."
+            exit 1
+          fi
+
+      - name: Fetch test cases from Zephyr Scale
+        env:
+          ZEPHYR_API_TOKEN: ${{ secrets.ZEPHYR_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ vars.JIRA_PROJECT_KEY || 'AAF' }}
+        run: |
+          set -euo pipefail
+          mkdir -p docs/zephyr
+          # NOTE: replace with your tenant's Zephyr Scale endpoint.
+          curl -fsSL \
+            -H "Authorization: Bearer ${ZEPHYR_API_TOKEN}" \
+            "https://api.zephyrscale.smartbear.com/v2/testcases?projectKey=${JIRA_PROJECT_KEY}&maxResults=200" \
+            -o /tmp/zephyr.json
+
+          python3 - <<'PY'
+          import json, datetime, pathlib
+          data = json.load(open("/tmp/zephyr.json"))
+          rows = []
+          for tc in data.get("values", []):
+              key   = tc.get("key", "")
+              name  = tc.get("name", "").replace("|", "/")
+              jira  = ",".join(i.get("key","") for i in tc.get("issueLinks", []))
+              rows.append(f"| {key} | {jira} | {name} | _(map manually)_ |")
+          out = pathlib.Path("docs/zephyr/test-cases.md")
+          header = (
+            f"# Zephyr Test Case Catalog (TDD)\n\n"
+            f"> Auto-generated on {datetime.datetime.utcnow().isoformat()}Z. Do not edit manually.\n\n"
+            "| Zephyr key | Linked Jira | Title | Test class / method |\n"
+            "|------------|-------------|-------|---------------------|\n"
+          )
+          out.write_text(header + "\n".join(rows) + "\n")
+          PY
+
+      - name: Open PR with changes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(zephyr): nightly test-case sync"
+          branch: chore/zephyr-sync
+          title: "chore(zephyr): nightly test-case sync"
+          body: |
+            Automated sync of Zephyr Scale test cases into
+            `docs/zephyr/test-cases.md`.
+          add-paths: |
+            docs/zephyr/test-cases.md
