@@ -4,13 +4,17 @@
 > `.feature` files. The AI agent reads this file to understand
 > intent before fixing failing scenarios.
 
-## Persona
+## Personas
 
-**Sam — the casual shopper.** Sam visits the AutomationExercise
-storefront to browse, search, and shortlist clothing items. Sam is
-not logged in for the catalog flow.
+- **Sam — the casual shopper.** Browses, searches, and adds items to the cart. Not authenticated for the catalog flow.
+- **Riley — the new account holder.** Registers, verifies the post-signup experience, then deletes the account.
+- **Jordan — the support seeker.** Sends a message via Contact Us with an attachment.
+- **Pat — the newsletter subscriber.** Joins the mailing list from the footer.
+
+---
 
 ## Flow 1 — Browse the catalog (`product_catalog.feature`)
+Linked to **SCRUM-2** (Story) / **SCRUM-T2, SCRUM-T3** (Zephyr).
 
 | Step | Sam's intent                              | System response                                  |
 |------|-------------------------------------------|--------------------------------------------------|
@@ -20,20 +24,107 @@ not logged in for the catalog flow.
 | 4    | Types a term in the search box and submits| Catalog filters to matching products             |
 | 5    | Confirms the "Searched Products" heading appears | Visual confirmation the filter applied   |
 
-### Acceptance criteria (mirrors Jira AAF-101)
+### Acceptance criteria
 - Home page is reachable without authentication.
-- Products page must list **at least one** product card.
-- Search results section must render the heading **Searched Products**.
-- URL must contain `/products` after navigation.
+- Products page lists **at least one** product card.
+- Search results section renders the heading **Searched Products**.
+- URL contains `/products` after navigation.
 
-### Out of scope for this flow
-- Adding to cart (covered by Flow 2 once added).
-- Authentication (covered by Flow 3 once added).
+---
+
+## Flow 2 — Register and delete an account (`user_registration.feature`)
+Linked to **SCRUM-5** (Story) / **SCRUM-T6** (Zephyr).
+
+| Step | Intent                                            | System response                                  |
+|------|---------------------------------------------------|--------------------------------------------------|
+| 1    | Opens **Signup / Login** from the top nav         | Login/Signup page renders                        |
+| 2    | Submits a unique name + email under "New User Signup" | Enter Account Information page is shown      |
+| 3    | Fills mandatory account information               | Form accepts the data                            |
+| 4    | Submits the account creation form                 | **Account Created!** confirmation is displayed   |
+| 5    | Continues to the home page                        | Top nav now shows **Logged in as &lt;name&gt;**  |
+| 6    | Clicks **Delete Account**                         | **Account Deleted!** confirmation is displayed   |
+
+### Acceptance criteria
+- Email used for signup must be unique per scenario (`TestDataUtil.uniqueEmail()`).
+- Post-signup, the user is greeted by name in the navigation.
+- Account deletion succeeds without errors.
+
+---
+
+## Flow 3 — Submit Contact Us (`contact_us.feature`)
+Linked to **SCRUM-7** (Story) / **SCRUM-T8** (Zephyr).
+
+| Step | Intent                                            | System response                                  |
+|------|---------------------------------------------------|--------------------------------------------------|
+| 1    | Opens **Contact Us** from the top nav             | Contact Us page renders with **Get In Touch**    |
+| 2    | Fills name / email / subject / message            | Form accepts the data                            |
+| 3    | Attaches `src/test/resources/test-upload.txt`     | File input shows the attachment                  |
+| 4    | Submits the form and accepts the JS confirm dialog| Page returns success banner                      |
+
+### Acceptance criteria
+- Submission must include a non-empty attachment.
+- Success message **Success! Your details have been submitted successfully.** must be displayed.
+
+---
+
+## Flow 4 — Subscribe to the newsletter (`subscriptions.feature`)
+Linked to **SCRUM-8** (Story) / **SCRUM-T9** (Zephyr).
+
+| Step | Intent                                            | System response                                  |
+|------|---------------------------------------------------|--------------------------------------------------|
+| 1    | Scrolls to the footer subscription form           | Subscription email field is visible              |
+| 2    | Enters a unique email and submits                 | Subscription is accepted                         |
+| 3    | Confirms the success banner                       | **You have been successfully subscribed!** shown |
+
+### Acceptance criteria
+- The footer subscription input **#susbscribe_email** must be reachable on the home page.
+- Success banner must contain **successfully subscribed**.
+
+---
+
+## Flow 5 — View product details and add to cart (`product_detail.feature`)
+Linked to **SCRUM-3** (Story) / **SCRUM-T4** (Zephyr).
+
+| Step | Alex's intent                             | System response                                  |
+|------|-------------------------------------------|--------------------------------------------------|
+| 1    | Navigates to the catalog                  | Products page loads with product cards          |
+| 2    | Clicks on a product card                  | Product detail page loads with full information |
+| 3    | Reviews product name, price, quantity     | All product details are visible                  |
+| 4    | Enters desired quantity and clicks "Add to Cart" | Item is added to cart                        |
+| 5    | Confirms cart count increments            | Cart badge in nav shows updated count            |
+
+### Acceptance criteria
+- Product detail page displays product name, price, description, and quantity selector.
+- Add to cart button adds the correct quantity to the cart.
+- Cart count in the navigation header increments correctly.
+- Product detail page is reachable from any catalog search result.
+
+---
+
+## Flow 6 — View and manage cart (`cart_page.feature`)
+Linked to **SCRUM-4** (Story) / **SCRUM-T5** (Zephyr).
+
+| Step | Alex's intent                             | System response                                  |
+|------|-------------------------------------------|--------------------------------------------------|
+| 1    | Clicks the cart icon in the top nav       | Cart page loads with items list                 |
+| 2    | Verifies product names and quantities     | All added items appear with correct details     |
+| 3    | Changes the quantity of an item           | Updated quantity is reflected in cart total     |
+| 4    | Removes an item from cart                 | Item is deleted, cart updates                    |
+| 5    | Confirms cart total price calculation     | Total reflects current items and quantities      |
+
+### Acceptance criteria
+- Cart page displays all added items with product name, price, and quantity.
+- Quantity updates are reflected in the cart total and UI immediately.
+- Remove button successfully deletes items from the cart.
+- Cart persists across page navigation (for the session).
+- Empty cart message is shown when no items remain.
+
+---
 
 ## Adding new flows
 
 1. Add a new `## Flow N — Title` section here.
 2. Create the matching `.feature` file under `src/test/resources/features/`.
-3. Tag the scenarios with `@JIRA-AAF-NNN @ZEPHYR-AAF-TNNN`.
-4. Add the corresponding row to `docs/jira/PROJECT.md` (Stories — BDD).
-5. Add step definitions under `com.agenticAI.autonomousFramework.bdd.steps`.
+3. Tag the scenarios with `@JIRA-SCRUM-NN @ZEPHYR-SCRUM-TNN`.
+4. Add the corresponding row to `docs/jira/PROJECT.md` (Stories) and `docs/zephyr/test-cases.md`.
+5. Add step definitions under `com.agenticAI.autonomousFramework.bdd.steps` and reuse Page Objects — never duplicate selectors.

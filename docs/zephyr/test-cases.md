@@ -1,20 +1,30 @@
-# Zephyr Test Case Catalog (TDD)
+# Zephyr Test Case Catalog
 
-> Mirrors what should exist in Zephyr Scale under project `AAF`.
-> Keep in sync with TestNG `@Test` methods. The nightly workflow
-> `.github/workflows/zephyr-sync.yml` (when enabled) refreshes this
-> file from the Zephyr REST API.
+> Curated set of 10 test cases — chosen so that **every framework
+> capability** (config, soft-assert, logging, reporting, traces,
+> cross-browser, BDD, Page Objects) is exercised at least once.
+>
+> **Companion CSV** for one-click Zephyr Scale import:
+> [`docs/zephyr/zephyr-import.csv`](zephyr-import.csv).
+>
+> Layered with [Jira project context](../jira/PROJECT.md). Project key: `SCRUM`.
 
-## Test Cases
+## Catalog
 
-| Zephyr key | Linked Jira | Title                                          | Test class / method |
-|------------|-------------|------------------------------------------------|---------------------|
-| AAF-T1     | AAF-10      | Verify home page loads                         | `PlaywrightTests#verifyHomePageLoads` |
-| AAF-T2     | AAF-10      | Verify navigation to test cases page           | `PlaywrightTests#verifyTestCasesPageNavigation` |
-| AAF-T3     | AAF-11      | Verify products page is visible                | `PlaywrightTests#verifyProductsPageIsVisible` |
-| AAF-T4     | AAF-13      | Verify search returns matching products        | `PlaywrightTests#verifySearchProduct` |
-| AAF-T5     | AAF-11      | Verify product detail page renders             | `PlaywrightTests#verifyFirstProductDetailPage` |
-| AAF-T6     | AAF-12      | Verify a single product can be added to cart   | `PlaywrightTests#verifyAddSingleProductToCart` |
+| Zephyr key   | Linked Jira | Style | Title                                          | Test class / scenario                                          |
+|--------------|-------------|-------|------------------------------------------------|----------------------------------------------------------------|
+| SCRUM-T1     | SCRUM-1     | TDD   | Home page loads (smoke)                        | `PlaywrightTests#verifyHomePageLoads`                          |
+| SCRUM-T2     | SCRUM-2     | BDD   | Catalog displays + search returns results      | `product_catalog.feature` (both scenarios)                     |
+| SCRUM-T3     | SCRUM-2     | TDD   | Search "Top" returns matching products         | `PlaywrightTests#verifySearchProduct`                          |
+| SCRUM-T4     | SCRUM-3     | TDD   | Add single product to cart                     | `PlaywrightTests#verifyAddSingleProductToCart`                 |
+| SCRUM-T5     | SCRUM-4     | TDD   | Cart shows correct item names + quantity       | `ComplexPlaywrightTests` (cart verification)                   |
+| SCRUM-T11    | SCRUM-3     | BDD   | Product detail page and add to cart            | `product_detail.feature` (both scenarios)                      |
+| SCRUM-T12    | SCRUM-4     | BDD   | Cart page and cart management                  | `cart_page.feature` (all scenarios)                            |
+| SCRUM-T6     | SCRUM-5     | BDD   | New user registration end-to-end               | `user_registration.feature`                                    |
+| SCRUM-T7     | SCRUM-6     | TDD   | Login with invalid password is rejected        | `AuthenticationTests#verifyLoginWithInvalidPasswordRejected`   |
+| SCRUM-T8     | SCRUM-7     | BDD   | Submit Contact Us form with attachment         | `contact_us.feature`                                           |
+| SCRUM-T9     | SCRUM-8     | BDD   | Subscribe to newsletter from home footer       | `subscriptions.feature`                                        |
+| SCRUM-T10    | SCRUM-9     | TDD   | Cross-browser smoke (catalog renders)          | `CrossBrowserSmokeTests#verifyCatalogRendersOnConfiguredBrowser` (run with `-Dapp.browser=firefox` / `webkit`) |
 
 ## Severity legend
 
@@ -32,5 +42,17 @@ When a test fails, the daily-test-fix workflow assigns the issue to the
 Copilot coding agent. The agent reads:
 1. The failing test name + the Jira/Zephyr keys from `@JiraTestMeta`.
 2. The matching row in this file for context (linked story, severity).
-3. `docs/jira/PROJECT.md` for story/AC details.
-4. `docs/bdd/business-flow.md` if the failure is BDD.
+3. [`docs/jira/PROJECT.md`](../jira/PROJECT.md) for story / acceptance criteria.
+4. [`docs/bdd/business-flow.md`](../bdd/business-flow.md) if the failure is BDD.
+
+## Importing into Zephyr Scale
+
+1. Open Jira project `SCRUM` → **Tests** → **Import Test Cases** → **CSV**.
+2. Choose [`docs/zephyr/zephyr-import.csv`](zephyr-import.csv).
+3. Map the columns when prompted (the CSV uses Zephyr Scale's standard
+   field names: `Name`, `Objective`, `Precondition`, `Test Script (Step-by-Step) - Step`,
+   `Test Script (Step-by-Step) - Test Data`, `Test Script (Step-by-Step) - Expected Result`,
+   `Labels`, `Priority`, `Issue Links`).
+4. Run the import. Zephyr will assign keys `SCRUM-T1`..`SCRUM-T10`
+   (or your tenant's next free numbers — update this file if they differ).
+

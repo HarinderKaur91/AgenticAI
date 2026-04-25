@@ -11,7 +11,7 @@ import java.util.List;
 public class PlaywrightTests extends BaseTest {
 
     @Test(priority = 1, description = "Home page loads and key nav is visible")
-    @JiraTestMeta(jira = "AAF-10", zephyr = "AAF-T1", story = "Home page is reachable",
+    @JiraTestMeta(jira = "SCRUM-1", zephyr = "SCRUM-T1", story = "Home page is reachable",
             severity = TestSeverity.CRITICAL)
     public void verifyHomePageLoads() {
         homePage.open();
@@ -19,7 +19,7 @@ public class PlaywrightTests extends BaseTest {
     }
 
     @Test(priority = 2, description = "Test Cases page is reachable from the home page")
-    @JiraTestMeta(jira = "AAF-10", zephyr = "AAF-T2", story = "Home page is reachable",
+    @JiraTestMeta(jira = "SCRUM-1", zephyr = "SCRUM-T1", story = "Home page is reachable",
             severity = TestSeverity.MAJOR)
     public void verifyTestCasesPageNavigation() {
         homePage.open();
@@ -29,7 +29,7 @@ public class PlaywrightTests extends BaseTest {
     }
 
     @Test(priority = 3, description = "Products catalog renders with at least one product")
-    @JiraTestMeta(jira = "AAF-11", zephyr = "AAF-T3", story = "Products catalog displays items",
+    @JiraTestMeta(jira = "SCRUM-2", zephyr = "SCRUM-T2", story = "Catalog browsing & search",
             severity = TestSeverity.CRITICAL)
     public void verifyProductsPageIsVisible() {
         homePage.open();
@@ -39,7 +39,7 @@ public class PlaywrightTests extends BaseTest {
     }
 
     @Test(priority = 4, description = "Catalog search returns matching results")
-    @JiraTestMeta(jira = "AAF-13", zephyr = "AAF-T4", story = "User can search the catalog",
+    @JiraTestMeta(jira = "SCRUM-2", zephyr = "SCRUM-T3", story = "Catalog browsing & search",
             severity = TestSeverity.MAJOR)
     public void verifySearchProduct() {
         homePage.open();
@@ -53,7 +53,7 @@ public class PlaywrightTests extends BaseTest {
     }
 
     @Test(priority = 5, description = "Product detail page renders for the first product")
-    @JiraTestMeta(jira = "AAF-11", zephyr = "AAF-T5", story = "Products catalog displays items",
+    @JiraTestMeta(jira = "SCRUM-2", zephyr = "SCRUM-T2", story = "Catalog browsing & search",
             severity = TestSeverity.MAJOR)
     public void verifyFirstProductDetailPage() {
         homePage.open();
@@ -65,7 +65,9 @@ public class PlaywrightTests extends BaseTest {
         Assert.assertFalse(productDetailPage.getProductName().isEmpty(), "Product name is empty.");
     }
 
-    @Test(priority = 6)
+    @Test(priority = 6, description = "User can add a single product to the cart")
+    @JiraTestMeta(jira = "SCRUM-3", zephyr = "SCRUM-T4", story = "Add product to cart",
+            severity = TestSeverity.CRITICAL)
     public void verifyAddSingleProductToCart() {
         homePage.open();
         homePage.clickProducts();

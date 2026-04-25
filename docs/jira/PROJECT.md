@@ -8,44 +8,44 @@
 
 ## Project
 
-| Field        | Value                                  |
-|--------------|----------------------------------------|
-| Project name | AgenticAI Autonomous Framework         |
-| Project key  | `AAF`                                  |
-| Jira URL     | https://your-org.atlassian.net (TODO)  |
-| Board type   | Scrum                                  |
-| Workflow     | Backlog → To Do → In Progress → In Review → Done |
-
-> Replace the URL above and set `app.jira.baseUrl` in
-> `src/test/resources/config/default.conf` once the real Jira project exists.
+| Field        | Value                                               |
+|--------------|-----------------------------------------------------|
+| Project name | AgenticAI Autonomous Framework                      |
+| Project key  | `SCRUM`                                             |
+| Jira URL     | https://kaurharinder91.atlassian.net                |
+| Board URL    | https://kaurharinder91.atlassian.net/jira/software/projects/SCRUM/boards/1 |
+| Board type   | Scrum                                               |
+| Workflow     | Backlog → To Do → In Progress → In Review → Done    |
 
 ## Epics
 
-| Epic key | Title                                     |
-|----------|-------------------------------------------|
-| AAF-1    | Self-healing Playwright test framework    |
-| AAF-2    | Product catalog automation                |
-| AAF-3    | Cart & checkout automation                |
-| AAF-4    | Account / login automation                |
+| Epic key   | Title                                  |
+|------------|----------------------------------------|
+| SCRUM-100  | Self-healing Playwright test framework |
+| SCRUM-101  | Product catalog & search               |
+| SCRUM-102  | Cart & checkout                        |
+| SCRUM-103  | Account / authentication               |
+| SCRUM-104  | Site engagement (contact, subscribe)   |
 
-## Stories (TDD)
+## Stories
 
-| Story key | Epic    | Title                                     | Acceptance Criteria (summary) |
-|-----------|---------|-------------------------------------------|--------------------------------|
-| AAF-10    | AAF-2   | Home page is reachable                    | Home page loads, key nav links visible |
-| AAF-11    | AAF-2   | Products catalog displays items           | Catalog page shows products, count > 0 |
-| AAF-12    | AAF-3   | User can add a product to the cart        | Cart count increments, item appears in cart |
-| AAF-13    | AAF-2   | User can search the catalog               | Search returns results matching the term |
-| AAF-14    | AAF-4   | User can submit Contact Us form           | Success message displayed |
-
-## Stories (BDD)
-
-| Story key | Epic    | Title                                     | Feature file |
-|-----------|---------|-------------------------------------------|--------------|
-| AAF-101   | AAF-2   | Product catalog browsing                  | `product_catalog.feature` |
+| Story key  | Epic       | Title                                    | Acceptance Criteria (summary) |
+|------------|------------|------------------------------------------|--------------------------------|
+| SCRUM-1    | SCRUM-101  | Home page is reachable                   | Home loads, key nav links visible |
+| SCRUM-2    | SCRUM-101  | Catalog browsing & search                | Catalog renders, search returns results, URL is `/products` |
+| SCRUM-3    | SCRUM-102  | Add product to cart                      | Cart count increments, item appears in cart |
+| SCRUM-4    | SCRUM-102  | Cart shows correct items & quantities    | Names + quantities match what was added |
+| SCRUM-5    | SCRUM-103  | New user registration end-to-end         | Account created, deletable post-signup |
+| SCRUM-6    | SCRUM-103  | Login rejects invalid credentials        | Error message shown, no session granted |
+| SCRUM-7    | SCRUM-104  | Submit Contact Us form with attachment   | Success banner displayed |
+| SCRUM-8    | SCRUM-104  | Subscribe to newsletter                  | Subscription success message displayed |
+| SCRUM-9    | SCRUM-100  | Cross-browser smoke (chromium/firefox/webkit) | Catalog flow passes on all 3 engines |
 
 ## Conventions
 
-- Every test method **must** carry `@JiraTestMeta(jira="AAF-NN", zephyr="AAF-TNN", ...)`.
-- Every Cucumber scenario **must** carry `@JIRA-AAF-NN @ZEPHYR-AAF-TNN` tags.
+- Every test method **must** carry `@JiraTestMeta(jira="SCRUM-N", zephyr="SCRUM-TN", ...)`.
+- Every Cucumber scenario **must** carry `@JIRA-SCRUM-N @ZEPHYR-SCRUM-TN` tags.
 - When the agent files a new bug, prefix the title with `[Auto] ` and label it `auto-raised`.
+- Test catalog lives in [docs/zephyr/test-cases.md](../zephyr/test-cases.md).
+- A Zephyr-importable CSV is generated at [docs/zephyr/zephyr-import.csv](../zephyr/zephyr-import.csv).
+
