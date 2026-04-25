@@ -21,6 +21,18 @@ public class ProductDetailPage {
         return page.locator(".product-information h2").textContent().trim();
     }
 
+    public boolean isProductNameVisible() {
+        return page.locator(".product-information h2").isVisible();
+    }
+
+    public boolean isProductPriceVisible() {
+        return page.locator(".product-information span span").first().isVisible();
+    }
+
+    public boolean isQuantitySelectorVisible() {
+        return page.locator("#quantity").isVisible();
+    }
+
     public void setQuantity(String quantity) {
         page.locator("#quantity").fill(quantity);
     }
@@ -35,5 +47,14 @@ public class ProductDetailPage {
         viewCartLink.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
         // Use force click to bypass ad overlays
         viewCartLink.click(new Locator.ClickOptions().setForce(true));
+    }
+
+    public boolean isCartConfirmationVisible() {
+        return page.locator(".modal-content").isVisible();
+    }
+
+    public boolean isViewCartLinkVisibleInPopup() {
+        Locator viewCartLink = page.locator(".modal-content a[href='/view_cart']");
+        return viewCartLink.count() > 0 && viewCartLink.first().isVisible();
     }
 }

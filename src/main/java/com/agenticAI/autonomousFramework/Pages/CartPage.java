@@ -1,5 +1,7 @@
 package com.agenticAI.autonomousFramework.Pages;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,5 +43,57 @@ public class CartPage {
                 .locator(".cart_quantity button")
                 .textContent()
                 .trim();
+    }
+
+    public String getQuantityByProductName(String productName) {
+        int count = page.locator("#cart_info_table tbody tr").count();
+        for (int i = 0; i < count; i++) {
+            String currentName = page.locator("#cart_info_table tbody tr")
+                    .nth(i)
+                    .locator(".cart_description h4 a")
+                    .textContent()
+                    .trim();
+            if (currentName.equals(productName)) {
+                return getQuantityByRow(i);
+            }
+        }
+        throw new IllegalArgumentException("Product not found in cart: " + productName);
+    }
+
+    public void removeProductByRow(int rowIndex) {
+        Locator row = page.locator("#cart_info_table tbody tr").nth(rowIndex);
+        row.locator(".cart_quantity_delete").click(new Locator.ClickOptions().setForce(true));
+        row.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.DETACHED));
+    }
+
+    public boolean isEmptyCartMessageVisible() {
+        Locator emptyCart = page.locator("#empty_cart");
+        return emptyCart.count() > 0 && emptyCart.first().isVisible();
+    }
+
+    public int getUnitPriceByRow(int rowIndex) {
+        String priceText = page.locator("#cart_info_table tbody tr")
+                .nth(rowIndex)
+                .locator(".cart_price p")
+                .textContent()
+                .trim();
+        return parseCurrencyAmount(priceText);
+    }
+
+    public int getTotalPriceByRow(int rowIndex) {
+        String totalText = page.locator("#cart_info_table tbody tr")
+                .nth(rowIndex)
+                .locator(".cart_total p")
+                .textContent()
+                .trim();
+        return parseCurrencyAmount(totalText);
+    }
+
+    private int parseCurrencyAmount(String text) {
+        String digits = text.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
+            throw new IllegalArgumentException("Unable to parse currency amount from: " + text);
+        }
+        return Integer.parseInt(digits);
     }
 }

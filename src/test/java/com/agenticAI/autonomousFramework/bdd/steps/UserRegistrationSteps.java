@@ -37,7 +37,7 @@ public class UserRegistrationSteps {
         return loginPage;
     }
 
-    @When("the user opens the signup/login page")
+    @When("the user opens the signup\\/login page")
     public void open_signup_login() {
         home().clickSignupLogin();
         softly.assertThat("Login page visible",
