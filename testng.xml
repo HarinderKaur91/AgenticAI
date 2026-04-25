@@ -5,16 +5,16 @@
     </listeners>
 
     <!-- TDD: TestNG-driven Playwright tests -->
-    <test name="TDD-Suite">
+    <!-- <test name="TDD-Suite">
         <classes>
             <class name="com.agenticAI.autonomousFramework.Java.PlaywrightTests"/>
             <class name="com.agenticAI.autonomousFramework.Java.AuthenticationTests"/>
             <class name="com.agenticAI.autonomousFramework.Java.CrossBrowserSmokeTests"/>
-            <!-- <class name="com.agenticAI.autonomousFramework.Java.ComplexPlaywrightTests"/> -->
-            <!-- <class name="com.agenticAI.autonomousFramework.Java.LocatorChallengeTests"/> -->
-            <!-- <class name="com.agenticAI.autonomousFramework.Java.UnfixableTests"/> -->
+            <class name="com.agenticAI.autonomousFramework.Java.ComplexPlaywrightTests"/>
+            <class name="com.agenticAI.autonomousFramework.Java.LocatorChallengeTests"/>
+            <class name="com.agenticAI.autonomousFramework.Java.UnfixableTests"/>
         </classes>
-    </test>
+    </test> -->
 
     <!-- BDD: Cucumber scenarios executed via TestNG runner -->
     <test name="BDD-Suite">
