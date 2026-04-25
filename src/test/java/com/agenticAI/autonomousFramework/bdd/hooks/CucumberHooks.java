@@ -94,10 +94,10 @@ public class CucumberHooks {
             extentStep.fail("Step failed");
             LoggerUtil.error("[STEP FAIL]");
         } else if ("SKIPPED".equals(stepStatus)) {
-            extentStep.skip("⊘ Step skipped");
+            extentStep.skip("Step skipped");
             LoggerUtil.info("[STEP SKIP]");
         } else {
-            extentStep.pass("✓ Step passed");
+            extentStep.pass("Step passed");
             LoggerUtil.info("[STEP PASS]");
         }
     }
@@ -116,14 +116,14 @@ public class CucumberHooks {
             }
             if (scenario.isFailed() && page != null && !page.isClosed()) {
                 byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
-                String screenshotName = "failure-" + scenario.getName().replaceAll("\\W+", "_")
+                String screenshotName = "failure-" + scenarioSlug(scenario)
                         + "-" + System.currentTimeMillis();
                 scenario.attach(shot, "image/png", screenshotName);
             }
             if (context != null) {
                 if (cfg.traceOnFailure() && scenario.isFailed()) {
                     Path tracePath = Paths.get("reports", "traces",
-                            "bdd-" + scenario.getName().replaceAll("\\W+", "_")
+                            "bdd-" + scenarioSlug(scenario)
                                     + "-" + System.currentTimeMillis() + ".zip");
                     tracePath.getParent().toFile().mkdirs();
                     try { context.tracing().stop(new Tracing.StopOptions().setPath(tracePath)); }
@@ -141,5 +141,9 @@ public class CucumberHooks {
             LoggerUtil.clearTestContext();
             ExtentReportManager.flushReports();
         }
+    }
+
+    private String scenarioSlug(Scenario scenario) {
+        return scenario.getName().replaceAll("\\W+", "_");
     }
 }
