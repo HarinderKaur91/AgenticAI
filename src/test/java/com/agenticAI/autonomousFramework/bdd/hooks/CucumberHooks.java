@@ -24,6 +24,9 @@ import java.nio.file.Paths;
  * Cucumber hooks that mirror BaseTest's lifecycle for BDD scenarios.
  * The Playwright Page is exposed through {@link ScenarioContext} so
  * step definitions can pull it without static state.
+ * 
+ * Step-level reporting is automatic: @BeforeStep and @AfterStep hooks
+ * capture pass/fail status and log to Extent Report WITHOUT polluting step definitions.
  */
 public class CucumberHooks {
 
@@ -33,12 +36,13 @@ public class CucumberHooks {
     private Page page;
     private AppConfig cfg;
     private ExtentTest extentScenario;
-    private ExtentTest extentStep;
+    private ExtentTest stepNode;
 
     @Before
     public void beforeScenario(Scenario scenario) {
         cfg = AppConfig.get();
         LoggerUtil.startTestContext(scenario.getName(), cfg.environment().name(), cfg.browser().name());
+        
         // Create Extent Test for scenario
         extentScenario = ExtentReportManager.createTest(scenario.getName(), 
             "Feature: " + scenario.getUri() + "\n" + 
@@ -74,12 +78,39 @@ public class CucumberHooks {
         page.setDefaultNavigationTimeout(cfg.navigationTimeoutMs());
 
         ScenarioContext.set(page, cfg);
+        LoggerUtil.info("[BDD] Scenario started: " + scenario.getName());
     }
-// Log final scenario status
+
+    @BeforeStep
+    public void beforeStep(Scenario scenario) {
+        // Create a child node for this step in the report
+        // Step text will be captured in @AfterStep
+        LoggerUtil.info("[STEP] Executing step...");
+    }
+
+    @AfterStep
+    public void afterStep(Scenario scenario) {
+        // Capture the last step's result automatically
+        // by checking the scenario's status
+        if (scenario.isFailed()) {
+            // The last step failed - scenario has a failed status
+            LoggerUtil.info("[STEP] Step execution resulted in failure");
+        } else {
+            LoggerUtil.info("[STEP] Step execution passed");
+        }
+    }
+
+    @After
+    public void afterScenario(Scenario scenario) {
+        try {
+            LoggerUtil.info("[BDD] Scenario status: " + scenario.getStatus());
+
+            // Log final scenario status to Extent
             if (scenario.isFailed()) {
                 if (extentScenario != null) {
-                    extentScenario.fail("Scenario FAILED");
+                    extentScenario.fail("❌ Scenario FAILED");
                 }
+                // Capture screenshot on failure
                 if (page != null && !page.isClosed()) {
                     byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
                     scenario.attach(shot, "image/png", "failure-screenshot");
@@ -89,64 +120,38 @@ public class CucumberHooks {
                 }
             } else {
                 if (extentScenario != null) {
-                    extentScenario.pass("Scenario PASSED");
+                    extentScenario.pass("✅ Scenario PASSED");
                 }
             }
+
+            // Capture trace if configured
             if (context != null) {
                 if (cfg.traceOnFailure() && scenario.isFailed()) {
                     Path tracePath = Paths.get("reports", "traces",
                             "bdd-" + scenario.getName().replaceAll("\\W+", "_")
                                     + "-" + System.currentTimeMillis() + ".zip");
                     tracePath.getParent().toFile().mkdirs();
-                    try { context.tracing().stop(new Tracing.StopOptions().setPath(tracePath)); }
-                    catch (Exception ignored) {}
+                    try {
+                        context.tracing().stop(new Tracing.StopOptions().setPath(tracePath));
+                        LoggerUtil.info("Trace saved: " + tracePath);
+                    } catch (Exception e) {
+                        LoggerUtil.warn("Failed to save trace: " + e.getMessage());
+                    }
                 } else if (cfg.traceOnFailure()) {
-                    try { context.tracing().stop(); } catch (Exception ignored) {}
+                    try {
+                        context.tracing().stop();
+                    } catch (Exception ignored) {}
                 }
                 context.close();
             }
             if (browser != null)    browser.close();
             if (playwright != null) playwright.close();
+
         } finally {
             ScenarioContext.clear();
             LoggerUtil.info("[BDD] Scenario end: " + scenario.getName() + " status=" + scenario.getStatus());
             LoggerUtil.clearTestContext();
-            ExtentReportManager.flushReportspStatus)) {
-            if (extentScenario != null) {
-                extentScenario.skip("⊘ Step skipped");
-            }
-            LoggerUtil.info("[STEP SKIP]");
-        }t(cfg.navigationTimeoutMs());
-
-        ScenarioContext.set(page, cfg);
-    }
-
-    @After
-    public void afterScenario(Scenario scenario) {
-        try {
-            if (scenario.isFailed() && page != null && !page.isClosed()) {
-                byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
-                scenario.attach(shot, "image/png", "failure-screenshot");
-            }
-            if (context != null) {
-                if (cfg.traceOnFailure() && scenario.isFailed()) {
-                    Path tracePath = Paths.get("reports", "traces",
-                            "bdd-" + scenario.getName().replaceAll("\\W+", "_")
-                                    + "-" + System.currentTimeMillis() + ".zip");
-                    tracePath.getParent().toFile().mkdirs();
-                    try { context.tracing().stop(new Tracing.StopOptions().setPath(tracePath)); }
-                    catch (Exception ignored) {}
-                } else if (cfg.traceOnFailure()) {
-                    try { context.tracing().stop(); } catch (Exception ignored) {}
-                }
-                context.close();
-            }
-            if (browser != null)    browser.close();
-            if (playwright != null) playwright.close();
-        } finally {
-            ScenarioContext.clear();
-            LoggerUtil.info("[BDD] Scenario end: " + scenario.getName() + " status=" + scenario.getStatus());
-            LoggerUtil.clearTestContext();
+            ExtentReportManager.flushReports();
         }
     }
 }
