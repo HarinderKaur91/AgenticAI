@@ -6,6 +6,7 @@ import com.microsoft.playwright.options.WaitForSelectorState;
 public class ProductDetailPage {
 
     private final Page page;
+    private static final String QUANTITY_SELECTOR = "#quantity";
 
     public ProductDetailPage(Page page) {
         this.page = page;
@@ -30,11 +31,11 @@ public class ProductDetailPage {
     }
 
     public boolean isQuantitySelectorVisible() {
-        return page.locator("#quantity").isVisible();
+        return page.locator(QUANTITY_SELECTOR).isVisible();
     }
 
     public void setQuantity(String quantity) {
-        page.locator("#quantity").fill(quantity);
+        page.locator(QUANTITY_SELECTOR).fill(quantity);
     }
 
     public void clickAddToCart() {

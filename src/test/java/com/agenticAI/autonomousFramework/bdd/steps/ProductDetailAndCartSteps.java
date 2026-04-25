@@ -10,6 +10,8 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
+import java.util.List;
+
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
@@ -23,7 +25,7 @@ public class ProductDetailAndCartSteps {
     private CartPage cartPage;
 
     private String selectedProductName;
-    private int expectedQuantity = 1;
+    private Integer expectedQuantity;
 
     private HomePage home() {
         if (homePage == null) homePage = new HomePage(ScenarioContext.page());
@@ -83,10 +85,15 @@ public class ProductDetailAndCartSteps {
 
     @When("the user clicks the {string} button")
     public void the_user_clicks_the_button(String buttonText) {
-        if (!"Add to Cart".equalsIgnoreCase(buttonText)) {
-            throw new IllegalArgumentException("Unsupported button text: " + buttonText);
+        if ("Add to Cart".equalsIgnoreCase(buttonText)) {
+            detail().clickAddToCart();
+            return;
         }
-        detail().clickAddToCart();
+        if ("View Cart".equalsIgnoreCase(buttonText)) {
+            navigateToCartPage();
+            return;
+        }
+        throw new IllegalArgumentException("Unsupported button text: " + buttonText);
     }
 
     @Then("a cart confirmation message should appear")
@@ -98,22 +105,14 @@ public class ProductDetailAndCartSteps {
 
     @And("the cart count in the navigation should increment")
     public void the_cart_count_in_the_navigation_should_increment() {
-        if (detail().isViewCartLinkVisibleInPopup()) {
-            detail().clickViewCartFromPopup();
-        } else {
-            home().clickCart();
-        }
+        navigateToCartPage();
         softly.assertThat("Cart has at least one item", cart().getCartRowCount(), is(greaterThan(0)));
         softly.assertAll();
     }
 
     @When("the user navigates to the cart page")
     public void the_user_navigates_to_the_cart_page() {
-        if (detail().isViewCartLinkVisibleInPopup()) {
-            detail().clickViewCartFromPopup();
-        } else {
-            home().clickCart();
-        }
+        navigateToCartPage();
     }
 
     @Then("the cart page should be displayed")
@@ -131,8 +130,10 @@ public class ProductDetailAndCartSteps {
 
     @Then("the product name should match the original product")
     public void the_product_name_should_match_the_original_product() {
-        softly.assertThat("Selected product name matches cart product",
-                cart().getCartProductNames().getFirst(), is(equalTo(selectedProductName)));
+        List<String> cartProductNames = cart().getCartProductNames();
+        softly.assertThat("Cart has at least one product", cartProductNames.size(), is(greaterThan(0)));
+        softly.assertThat("Selected product name is present in cart",
+                cartProductNames.contains(selectedProductName), is(equalTo(true)));
         softly.assertAll();
     }
 
@@ -146,13 +147,7 @@ public class ProductDetailAndCartSteps {
     @When("the user updates the product quantity to {int}")
     public void the_user_updates_the_product_quantity_to(Integer quantity) {
         expectedQuantity = quantity;
-        cart().removeProductByRow(0);
-        home().clickProducts();
-        products().openProductDetailByIndex(0);
-        selectedProductName = detail().getProductName();
-        detail().setQuantity(String.valueOf(quantity));
-        detail().clickAddToCart();
-        detail().clickViewCartFromPopup();
+        replaceSelectedProductInCart(quantity);
     }
 
     @Then("the cart should reflect the updated quantity")
@@ -164,9 +159,13 @@ public class ProductDetailAndCartSteps {
 
     @Then("the cart total should be recalculated")
     public void the_cart_total_should_be_recalculated() {
-        int expectedTotal = cart().getUnitPriceByRow(0) * expectedQuantity;
+        if (expectedQuantity == null) {
+            throw new IllegalStateException("Expected quantity was not set before validating cart total.");
+        }
+        int productRowIndex = cart().getRowIndexByProductName(selectedProductName);
+        int expectedTotal = cart().getUnitPriceByRow(productRowIndex) * expectedQuantity;
         softly.assertThat("Row total reflects quantity x unit price",
-                cart().getTotalPriceByRow(0), is(equalTo(expectedTotal)));
+                cart().getTotalPriceByRow(productRowIndex), is(equalTo(expectedTotal)));
         softly.assertAll();
     }
 
@@ -193,5 +192,23 @@ public class ProductDetailAndCartSteps {
         softly.assertThat("Empty cart message is visible",
                 cart().isEmptyCartMessageVisible(), is(equalTo(true)));
         softly.assertAll();
+    }
+
+    private void navigateToCartPage() {
+        if (detail().isViewCartLinkVisibleInPopup()) {
+            detail().clickViewCartFromPopup();
+        } else {
+            home().clickCart();
+        }
+    }
+
+    private void replaceSelectedProductInCart(int quantity) {
+        cart().removeProductByName(selectedProductName);
+        home().clickProducts();
+        products().openProductDetailByIndex(0);
+        selectedProductName = detail().getProductName();
+        detail().setQuantity(String.valueOf(quantity));
+        detail().clickAddToCart();
+        detail().clickViewCartFromPopup();
     }
 }

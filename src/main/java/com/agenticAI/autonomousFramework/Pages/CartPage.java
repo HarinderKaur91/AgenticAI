@@ -46,24 +46,21 @@ public class CartPage {
     }
 
     public String getQuantityByProductName(String productName) {
-        int count = page.locator("#cart_info_table tbody tr").count();
-        for (int i = 0; i < count; i++) {
-            String currentName = page.locator("#cart_info_table tbody tr")
-                    .nth(i)
-                    .locator(".cart_description h4 a")
-                    .textContent()
-                    .trim();
-            if (currentName.equals(productName)) {
-                return getQuantityByRow(i);
-            }
-        }
-        throw new IllegalArgumentException("Product not found in cart: " + productName);
+        return getQuantityByRow(findRowIndexByProductName(productName));
     }
 
     public void removeProductByRow(int rowIndex) {
         Locator row = page.locator("#cart_info_table tbody tr").nth(rowIndex);
         row.locator(".cart_quantity_delete").click(new Locator.ClickOptions().setForce(true));
         row.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.DETACHED));
+    }
+
+    public void removeProductByName(String productName) {
+        removeProductByRow(findRowIndexByProductName(productName));
+    }
+
+    public int getRowIndexByProductName(String productName) {
+        return findRowIndexByProductName(productName);
     }
 
     public boolean isEmptyCartMessageVisible() {
@@ -90,10 +87,28 @@ public class CartPage {
     }
 
     private int parseCurrencyAmount(String text) {
+        // AutomationExercise cart prices are whole-number rupee strings such as "Rs. 500".
         String digits = text.replaceAll("[^0-9]", "");
         if (digits.isEmpty()) {
-            throw new IllegalArgumentException("Unable to parse currency amount from: " + text);
+            throw new IllegalArgumentException("Unable to parse currency amount from: " + text
+                    + " (no numeric digits found).");
         }
         return Integer.parseInt(digits);
+    }
+
+    private int findRowIndexByProductName(String productName) {
+        int count = page.locator("#cart_info_table tbody tr").count();
+        for (int i = 0; i < count; i++) {
+            String currentName = page.locator("#cart_info_table tbody tr")
+                    .nth(i)
+                    .locator(".cart_description h4 a")
+                    .textContent()
+                    .trim();
+            if (currentName.equals(productName)) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException("Product not found in cart: " + productName
+                + ". Available products: " + getCartProductNames());
     }
 }
