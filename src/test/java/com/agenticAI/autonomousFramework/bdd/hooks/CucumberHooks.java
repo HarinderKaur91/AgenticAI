@@ -81,66 +81,63 @@ public class CucumberHooks {
         LoggerUtil.info("[BDD] Scenario started: " + scenario.getName());
     }
 
+    private ExtentTest extentStep;
+
     @BeforeStep
     public void beforeStep(Scenario scenario) {
-        // Create a child node for this step in the report
-        // Step text will be captured in @AfterStep
-        LoggerUtil.info("[STEP] Executing step...");
+        if (extentScenario != null) {
+            extentStep = extentScenario.createNode("Step");
+            extentStep.log(Status.INFO, "Executing step in scenario: " + scenario.getName());
+        }
     }
 
     @AfterStep
     public void afterStep(Scenario scenario) {
-        // Capture the last step's result automatically
-        // by checking the scenario's status
-        if (scenario.isFailed()) {
-            // The last step failed - scenario has a failed status
-            LoggerUtil.info("[STEP] Step execution resulted in failure");
+        if (extentStep == null) {
+            return;
+        }
+
+        String stepStatus = scenario.getStatus().name();
+        if ("FAILED".equals(stepStatus)) {
+            extentStep.fail("Step failed");
+            LoggerUtil.error("[STEP FAIL]");
+        } else if ("SKIPPED".equals(stepStatus)) {
+            extentStep.skip("Step skipped");
+            LoggerUtil.info("[STEP SKIP]");
         } else {
-            LoggerUtil.info("[STEP] Step execution passed");
+            extentStep.pass("Step passed");
+            LoggerUtil.info("[STEP PASS]");
         }
     }
 
     @After
     public void afterScenario(Scenario scenario) {
         try {
-            LoggerUtil.info("[BDD] Scenario status: " + scenario.getStatus());
-
-            // Log final scenario status to Extent
-            if (scenario.isFailed()) {
-                if (extentScenario != null) {
-                    extentScenario.fail("❌ Scenario FAILED");
-                }
-                // Capture screenshot on failure
-                if (page != null && !page.isClosed()) {
-                    byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
-                    scenario.attach(shot, "image/png", "failure-screenshot");
-                    if (extentScenario != null) {
-                        extentScenario.addScreenCaptureFromPath("failure-screenshot");
-                    }
-                }
-            } else {
-                if (extentScenario != null) {
-                    extentScenario.pass("✅ Scenario PASSED");
+            if (extentScenario != null) {
+                if (scenario.isFailed()) {
+                    extentScenario.fail("Scenario FAILED");
+                } else if ("SKIPPED".equals(scenario.getStatus().name())) {
+                    extentScenario.skip("Scenario SKIPPED");
+                } else {
+                    extentScenario.pass("Scenario PASSED");
                 }
             }
-
-            // Capture trace if configured
+            if (scenario.isFailed() && page != null && !page.isClosed()) {
+                byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
+                String screenshotName = "failure-" + scenarioSlug(scenario)
+                        + "-" + System.currentTimeMillis() + ".png";
+                scenario.attach(shot, "image/png", screenshotName);
+            }
             if (context != null) {
                 if (cfg.traceOnFailure() && scenario.isFailed()) {
                     Path tracePath = Paths.get("reports", "traces",
-                            "bdd-" + scenario.getName().replaceAll("\\W+", "_")
+                            "bdd-" + scenarioSlug(scenario)
                                     + "-" + System.currentTimeMillis() + ".zip");
                     tracePath.getParent().toFile().mkdirs();
-                    try {
-                        context.tracing().stop(new Tracing.StopOptions().setPath(tracePath));
-                        LoggerUtil.info("Trace saved: " + tracePath);
-                    } catch (Exception e) {
-                        LoggerUtil.warn("Failed to save trace: " + e.getMessage());
-                    }
+                    try { context.tracing().stop(new Tracing.StopOptions().setPath(tracePath)); }
+                    catch (Exception ignored) {}
                 } else if (cfg.traceOnFailure()) {
-                    try {
-                        context.tracing().stop();
-                    } catch (Exception ignored) {}
+                    try { context.tracing().stop(); } catch (Exception ignored) {}
                 }
                 context.close();
             }
@@ -153,5 +150,9 @@ public class CucumberHooks {
             LoggerUtil.clearTestContext();
             ExtentReportManager.flushReports();
         }
+    }
+
+    private String scenarioSlug(Scenario scenario) {
+        return scenario.getName().replaceAll("\\W+", "_");
     }
 }
