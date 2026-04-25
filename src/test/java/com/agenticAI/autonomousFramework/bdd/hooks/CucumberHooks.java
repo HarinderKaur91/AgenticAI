@@ -2,7 +2,10 @@ package com.agenticAI.autonomousFramework.bdd.hooks;
 
 import com.agenticAI.autonomousFramework.Config.AppConfig;
 import com.agenticAI.autonomousFramework.Enums.BrowserType;
+import com.agenticAI.autonomousFramework.Utils.ExtentReportManager;
 import com.agenticAI.autonomousFramework.Utils.LoggerUtil;
+import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.Status;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
@@ -11,6 +14,8 @@ import com.microsoft.playwright.Tracing;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
+import io.cucumber.java.AfterStep;
+import io.cucumber.java.BeforeStep;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,12 +32,18 @@ public class CucumberHooks {
     private BrowserContext context;
     private Page page;
     private AppConfig cfg;
+    private ExtentTest extentScenario;
+    private ExtentTest extentStep;
 
     @Before
     public void beforeScenario(Scenario scenario) {
         cfg = AppConfig.get();
         LoggerUtil.startTestContext(scenario.getName(), cfg.environment().name(), cfg.browser().name());
-        LoggerUtil.info("[BDD] Scenario start: " + scenario.getName());
+        // Create Extent Test for scenario
+        extentScenario = ExtentReportManager.createTest(scenario.getName(), 
+            "Feature: " + scenario.getUri() + "\n" + 
+            "Scenario: " + scenario.getName());
+        extentScenario.info("Tags: " + scenario.getSourceTagNames());
 
         playwright = Playwright.create();
         BrowserType configured = cfg.browser();
@@ -61,6 +72,51 @@ public class CucumberHooks {
         page = context.newPage();
         page.setDefaultTimeout(cfg.defaultTimeoutMs());
         page.setDefaultNavigationTimeout(cfg.navigationTimeoutMs());
+
+        ScenarioContext.set(page, cfg);
+    }
+// Log final scenario status
+            if (scenario.isFailed()) {
+                if (extentScenario != null) {
+                    extentScenario.fail("Scenario FAILED");
+                }
+                if (page != null && !page.isClosed()) {
+                    byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
+                    scenario.attach(shot, "image/png", "failure-screenshot");
+                    if (extentScenario != null) {
+                        extentScenario.addScreenCaptureFromPath("failure-screenshot");
+                    }
+                }
+            } else {
+                if (extentScenario != null) {
+                    extentScenario.pass("Scenario PASSED");
+                }
+            }
+            if (context != null) {
+                if (cfg.traceOnFailure() && scenario.isFailed()) {
+                    Path tracePath = Paths.get("reports", "traces",
+                            "bdd-" + scenario.getName().replaceAll("\\W+", "_")
+                                    + "-" + System.currentTimeMillis() + ".zip");
+                    tracePath.getParent().toFile().mkdirs();
+                    try { context.tracing().stop(new Tracing.StopOptions().setPath(tracePath)); }
+                    catch (Exception ignored) {}
+                } else if (cfg.traceOnFailure()) {
+                    try { context.tracing().stop(); } catch (Exception ignored) {}
+                }
+                context.close();
+            }
+            if (browser != null)    browser.close();
+            if (playwright != null) playwright.close();
+        } finally {
+            ScenarioContext.clear();
+            LoggerUtil.info("[BDD] Scenario end: " + scenario.getName() + " status=" + scenario.getStatus());
+            LoggerUtil.clearTestContext();
+            ExtentReportManager.flushReportspStatus)) {
+            if (extentScenario != null) {
+                extentScenario.skip("⊘ Step skipped");
+            }
+            LoggerUtil.info("[STEP SKIP]");
+        }t(cfg.navigationTimeoutMs());
 
         ScenarioContext.set(page, cfg);
     }

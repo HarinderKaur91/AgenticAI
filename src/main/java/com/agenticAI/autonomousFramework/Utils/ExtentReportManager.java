@@ -4,6 +4,7 @@ import com.agenticAI.autonomousFramework.Annotations.JiraTestMeta;
 import com.agenticAI.autonomousFramework.Config.AppConfig;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.Status;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 import com.aventstack.extentreports.reporter.configuration.Theme;
 
@@ -85,6 +86,39 @@ public class ExtentReportManager {
 
     public static void removeTest() {
         extentTest.remove();
+    }
+
+    public static void logStepPass(String stepText) {
+        ExtentTest test = getTest();
+        if (test != null) {
+            test.pass("<b style='color:green;'>✓ PASS:</b> " + stepText);
+        }
+        LoggerUtil.info("[STEP PASS] " + stepText);
+    }
+
+    public static void logStepFail(String stepText, String errorMessage) {
+        ExtentTest test = getTest();
+        if (test != null) {
+            test.fail("<b style='color:red;'>✗ FAIL:</b> " + stepText);
+            test.fail("Error: " + errorMessage);
+        }
+        LoggerUtil.error("[STEP FAIL] " + stepText + " - " + errorMessage);
+    }
+
+    public static void logStepSkip(String stepText) {
+        ExtentTest test = getTest();
+        if (test != null) {
+            test.skip("<b style='color:orange;'>⊘ SKIP:</b> " + stepText);
+        }
+        LoggerUtil.info("[STEP SKIP] " + stepText);
+    }
+
+    public static void logStepInfo(String stepText, String info) {
+        ExtentTest test = getTest();
+        if (test != null) {
+            test.info("<b>ℹ INFO:</b> " + stepText + " → " + info);
+        }
+        LoggerUtil.info("[STEP INFO] " + stepText + " → " + info);
     }
 
     public static void flushReports() {
