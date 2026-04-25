@@ -117,7 +117,7 @@ public class CucumberHooks {
             if (scenario.isFailed() && page != null && !page.isClosed()) {
                 byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
                 String screenshotName = "failure-" + scenarioSlug(scenario)
-                        + "-" + System.currentTimeMillis();
+                        + "-" + System.currentTimeMillis() + ".png";
                 scenario.attach(shot, "image/png", screenshotName);
             }
             if (context != null) {
