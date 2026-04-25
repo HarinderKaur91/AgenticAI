@@ -53,7 +53,15 @@ public final class AppConfig {
     public String apiBaseUrl() { return config.getString("app.apiBaseUrl"); }
 
     public BrowserType browser() { return BrowserType.fromString(config.getString("app.browser")); }
-    public boolean headless() { return config.getBoolean("app.headless"); }
+    public boolean headless() {
+        // CI environments (GitHub Actions, CircleCI, Travis CI, etc.) set CI=true.
+        // Always run headless when no display server is available.
+        String ciEnv = System.getenv("CI");
+        if (ciEnv != null && ciEnv.equalsIgnoreCase("true")) {
+            return true;
+        }
+        return config.getBoolean("app.headless");
+    }
     public int slowMoMs() { return config.getInt("app.slowMoMs"); }
 
     public int viewportWidth() { return config.getInt("app.viewport.width"); }
