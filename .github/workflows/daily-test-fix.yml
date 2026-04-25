@@ -51,13 +51,13 @@ jobs:
             fi
             if [ -f "testng-failed-artifact/testng-failed.xml" ]; then
               echo "Running only failed tests from previous run..."
-              mvn test -DsuiteXmlFile=testng-failed-artifact/testng-failed.xml
+              mvn test -DsuiteXmlFile=testng-failed-artifact/testng-failed.xml -Dapp.headless=true
             else
               echo "No failed tests XML found, running all tests..."
-              mvn clean test
+              mvn clean test -Dapp.headless=true
             fi
           else
-            mvn clean test
+            mvn clean test -Dapp.headless=true
           fi
         continue-on-error: true
         env:
