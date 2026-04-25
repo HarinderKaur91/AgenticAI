@@ -108,13 +108,17 @@ public class CucumberHooks {
             if (extentScenario != null) {
                 if (scenario.isFailed()) {
                     extentScenario.fail("Scenario FAILED");
+                } else if ("SKIPPED".equals(scenario.getStatus().name())) {
+                    extentScenario.skip("Scenario SKIPPED");
                 } else {
                     extentScenario.pass("Scenario PASSED");
                 }
             }
             if (scenario.isFailed() && page != null && !page.isClosed()) {
                 byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
-                scenario.attach(shot, "image/png", "failure-screenshot");
+                String screenshotName = "failure-" + scenario.getName().replaceAll("\\W+", "_")
+                        + "-" + System.currentTimeMillis();
+                scenario.attach(shot, "image/png", screenshotName);
             }
             if (context != null) {
                 if (cfg.traceOnFailure() && scenario.isFailed()) {
