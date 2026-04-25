@@ -75,55 +75,43 @@ public class CucumberHooks {
 
         ScenarioContext.set(page, cfg);
     }
-// Log final scenario status
-            if (scenario.isFailed()) {
-                if (extentScenario != null) {
-                    extentScenario.fail("Scenario FAILED");
-                }
-                if (page != null && !page.isClosed()) {
-                    byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
-                    scenario.attach(shot, "image/png", "failure-screenshot");
-                    if (extentScenario != null) {
-                        extentScenario.addScreenCaptureFromPath("failure-screenshot");
-                    }
-                }
-            } else {
-                if (extentScenario != null) {
-                    extentScenario.pass("Scenario PASSED");
-                }
-            }
-            if (context != null) {
-                if (cfg.traceOnFailure() && scenario.isFailed()) {
-                    Path tracePath = Paths.get("reports", "traces",
-                            "bdd-" + scenario.getName().replaceAll("\\W+", "_")
-                                    + "-" + System.currentTimeMillis() + ".zip");
-                    tracePath.getParent().toFile().mkdirs();
-                    try { context.tracing().stop(new Tracing.StopOptions().setPath(tracePath)); }
-                    catch (Exception ignored) {}
-                } else if (cfg.traceOnFailure()) {
-                    try { context.tracing().stop(); } catch (Exception ignored) {}
-                }
-                context.close();
-            }
-            if (browser != null)    browser.close();
-            if (playwright != null) playwright.close();
-        } finally {
-            ScenarioContext.clear();
-            LoggerUtil.info("[BDD] Scenario end: " + scenario.getName() + " status=" + scenario.getStatus());
-            LoggerUtil.clearTestContext();
-            ExtentReportManager.flushReportspStatus)) {
-            if (extentScenario != null) {
-                extentScenario.skip("⊘ Step skipped");
-            }
-            LoggerUtil.info("[STEP SKIP]");
-        }t(cfg.navigationTimeoutMs());
+    @BeforeStep
+    public void beforeStep(Scenario scenario) {
+        if (extentScenario != null) {
+            extentStep = extentScenario.createNode("Step");
+            extentStep.log(Status.INFO, "Executing step in scenario: " + scenario.getName());
+        }
+    }
 
-        ScenarioContext.set(page, cfg);
+    @AfterStep
+    public void afterStep(Scenario scenario) {
+        if (extentStep == null) {
+            return;
+        }
+
+        String stepStatus = scenario.getStatus().name();
+        if ("FAILED".equals(stepStatus)) {
+            extentStep.fail("Step failed");
+            LoggerUtil.error("[STEP FAIL]");
+        } else if ("SKIPPED".equals(stepStatus)) {
+            extentStep.skip("⊘ Step skipped");
+            LoggerUtil.info("[STEP SKIP]");
+        } else {
+            extentStep.pass("✓ Step passed");
+            LoggerUtil.info("[STEP PASS]");
+        }
     }
 
     @After
     public void afterScenario(Scenario scenario) {
         try {
+            if (extentScenario != null) {
+                if (scenario.isFailed()) {
+                    extentScenario.fail("Scenario FAILED");
+                } else {
+                    extentScenario.pass("Scenario PASSED");
+                }
+            }
             if (scenario.isFailed() && page != null && !page.isClosed()) {
                 byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
                 scenario.attach(shot, "image/png", "failure-screenshot");
@@ -147,6 +135,7 @@ public class CucumberHooks {
             ScenarioContext.clear();
             LoggerUtil.info("[BDD] Scenario end: " + scenario.getName() + " status=" + scenario.getStatus());
             LoggerUtil.clearTestContext();
+            ExtentReportManager.flushReports();
         }
     }
 }
