@@ -16,6 +16,9 @@
         </classes>
     </test> -->
 
+    <!-- Pick which Cucumber tag(s) to run from the suite file -->
+    <parameter name="cucumber.filter.tags" value="@JIRA-SCRUM-2"/>
+    
     <!-- BDD: Cucumber scenarios executed via TestNG runner -->
     <test name="BDD-Suite">
         <classes>
