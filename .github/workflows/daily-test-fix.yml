@@ -233,7 +233,7 @@ jobs:
 
   open-issue-and-assign-copilot:
     needs: run-tests
-    if: needs.run-tests.result == 'failure'
+    if: always() && needs.run-tests.result == 'failure'
     runs-on: ubuntu-latest
 
     steps:
