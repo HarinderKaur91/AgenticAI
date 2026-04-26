@@ -21,7 +21,8 @@ import io.cucumber.testng.CucumberOptions;
                 "pretty",
                 "html:reports/cucumber/cucumber-report.html",
                 "json:reports/cucumber/cucumber-report.json",
-                "summary"
+                "summary",
+                "com.agenticAI.autonomousFramework.bdd.plugin.ExtentCucumberPlugin"
         },
         monochrome = true,
         publish = false

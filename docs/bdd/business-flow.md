@@ -3,13 +3,48 @@
 > Plain-English description of the user journeys covered by the
 > `.feature` files. The AI agent reads this file to understand
 > intent before fixing failing scenarios.
+>
+> **Target site:** https://automationexercise.com
+> **Last updated:** 2026-04-25
+
+---
+
+## Table of Contents
+
+- [Personas](#personas)
+- [Coverage Matrix](#coverage-matrix)
+- [Flow 1 — Browse the catalog](#flow-1--browse-the-catalog-product_catalogfeature)
+- [Flow 2 — Register and delete an account](#flow-2--register-and-delete-an-account-user_registrationfeature)
+- [Flow 3 — Submit Contact Us](#flow-3--submit-contact-us-contact_usfeature)
+- [Flow 4 — Subscribe to the newsletter](#flow-4--subscribe-to-the-newsletter-subscriptionsfeature)
+- [Flow 5 — View product details and add to cart](#flow-5--view-product-details-and-add-to-cart-product_detailfeature)
+- [Flow 6 — View and manage cart](#flow-6--view-and-manage-cart-cart_pagefeature)
+- [Adding new flows](#adding-new-flows)
+
+---
 
 ## Personas
 
-- **Sam — the casual shopper.** Browses, searches, and adds items to the cart. Not authenticated for the catalog flow.
-- **Riley — the new account holder.** Registers, verifies the post-signup experience, then deletes the account.
-- **Jordan — the support seeker.** Sends a message via Contact Us with an attachment.
-- **Pat — the newsletter subscriber.** Joins the mailing list from the footer.
+| Persona | Role | Authenticated? | Used in flows |
+|---------|------|----------------|---------------|
+| **Sam**   | Casual shopper — browses & searches the catalog          | No  | Flow 1 |
+| **Riley** | New account holder — signs up, verifies, then deletes    | Yes | Flow 2 |
+| **Jordan**| Support seeker — submits Contact Us with attachment      | No  | Flow 3 |
+| **Pat**   | Newsletter subscriber — joins from the footer            | No  | Flow 4 |
+| **Alex**  | Returning shopper — views product details & manages cart | No  | Flow 5, 6 |
+
+---
+
+## Coverage Matrix
+
+| Flow | Feature File | Jira | Zephyr | Severity | Tag |
+|------|--------------|------|--------|----------|-----|
+| 1 | `product_catalog.feature` | SCRUM-2 | SCRUM-T2, SCRUM-T3 | HIGH     | `@smoke @regression` |
+| 2 | `user_registration.feature` | SCRUM-5 | SCRUM-T6           | CRITICAL | `@smoke @regression` |
+| 3 | `contact_us.feature`        | SCRUM-7 | SCRUM-T8           | MEDIUM   | `@regression`        |
+| 4 | `subscriptions.feature`     | SCRUM-8 | SCRUM-T9           | LOW      | `@regression`        |
+| 5 | `product_detail.feature`    | SCRUM-3 | SCRUM-T4           | HIGH     | `@smoke @regression` |
+| 6 | `cart_page.feature`         | SCRUM-4 | SCRUM-T5           | CRITICAL | `@smoke @regression` |
 
 ---
 

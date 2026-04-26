@@ -48,8 +48,9 @@ public class ProductCatalogSteps {
     @Then("the products catalog should be displayed")
     public void the_products_catalog_should_be_displayed() {
         softly.assertThat("Products page is visible", products().isProductsPageVisible(), is(equalTo(true)));
-        softly.assertThat("Catalog has at least one product",
-                products().getVisibleProductCount(), is(greaterThan(0)));
+        // TEMP: forced failure to demo screenshot embedding in Extent report — revert after verifying
+        softly.assertThat("Catalog has at least 9999 products (forced fail)",
+                products().getVisibleProductCount(), is(greaterThan(9999)));
         softly.assertAll();
     }
 

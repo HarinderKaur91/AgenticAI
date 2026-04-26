@@ -5,7 +5,6 @@ import com.agenticAI.autonomousFramework.Enums.BrowserType;
 import com.agenticAI.autonomousFramework.Utils.ExtentReportManager;
 import com.agenticAI.autonomousFramework.Utils.LoggerUtil;
 import com.aventstack.extentreports.ExtentTest;
-import com.aventstack.extentreports.Status;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
@@ -14,8 +13,6 @@ import com.microsoft.playwright.Tracing;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
-import io.cucumber.java.AfterStep;
-import io.cucumber.java.BeforeStep;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -81,48 +78,23 @@ public class CucumberHooks {
         LoggerUtil.info("[BDD] Scenario started: " + scenario.getName());
     }
 
-    private ExtentTest extentStep;
-
-    @BeforeStep
-    public void beforeStep(Scenario scenario) {
-        if (extentScenario != null) {
-            extentStep = extentScenario.createNode("Step");
-            extentStep.log(Status.INFO, "Executing step in scenario: " + scenario.getName());
-        }
-    }
-
-    @AfterStep
-    public void afterStep(Scenario scenario) {
-        if (extentStep == null) {
-            return;
-        }
-
-        String stepStatus = scenario.getStatus().name();
-        if ("FAILED".equals(stepStatus)) {
-            extentStep.fail("Step failed");
-            LoggerUtil.error("[STEP FAIL]");
-        } else if ("SKIPPED".equals(stepStatus)) {
-            extentStep.skip("Step skipped");
-            LoggerUtil.info("[STEP SKIP]");
-        } else {
-            extentStep.pass("Step passed");
-            LoggerUtil.info("[STEP PASS]");
-        }
-    }
+    // Step-level reporting is handled by ExtentCucumberPlugin
+    // (registered in CucumberTestNGRunner). The plugin captures actual
+    // Gherkin step text — no @BeforeStep/@AfterStep hooks needed here.
 
     @After
     public void afterScenario(Scenario scenario) {
         try {
-            if (extentScenario != null) {
-                if (scenario.isFailed()) {
-                    extentScenario.fail("Scenario FAILED");
-                } else if ("SKIPPED".equals(scenario.getStatus().name())) {
-                    extentScenario.skip("Scenario SKIPPED");
-                } else {
-                    extentScenario.pass("Scenario PASSED");
-                }
-            }
+            // NOTE: Scenario pass/fail/skip status is reported per-step by
+            // ExtentCucumberPlugin. Extent auto-rolls those step statuses
+            // up to the scenario level, so we DO NOT add an extra
+            // "Scenario PASSED/FAILED" log entry here (it would conflict
+            // with the per-step results and look misleading).
+
             if (scenario.isFailed() && page != null && !page.isClosed()) {
+                // Screenshot is also attached inline at the failed step by
+                // ExtentCucumberPlugin. Here we only attach to the Cucumber
+                // report so traces/videos line up.
                 byte[] shot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
                 String screenshotName = "failure-" + scenarioSlug(scenario)
                         + "-" + System.currentTimeMillis() + ".png";
