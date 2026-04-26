@@ -241,8 +241,9 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: test-reports
+          pattern: test-reports-*
           path: artifacts
+          merge-multiple: true
 
       - name: Create Or Update Issue
         id: issue
