@@ -1,7 +1,8 @@
 package com.agenticAI.autonomousFramework.Pages;
+import com.agenticAI.autonomousFramework.Utils.LoggerUtil;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.PlaywrightException;
+import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.WaitForSelectorState;
 
 public class ProductDetailPage {
@@ -56,7 +57,8 @@ public class ProductDetailPage {
         try {
             confirmationPopup.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
             return confirmationPopup.isVisible();
-        } catch (PlaywrightException ex) {
+        } catch (TimeoutError ex) {
+            LoggerUtil.warn("Add to cart confirmation popup was not visible: " + ex.getMessage());
             return false;
         }
     }
