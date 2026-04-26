@@ -1,6 +1,7 @@
 package com.agenticAI.autonomousFramework.Pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.WaitForSelectorState;
 
 public class ProductDetailPage {
@@ -51,7 +52,13 @@ public class ProductDetailPage {
     }
 
     public boolean isCartConfirmationVisible() {
-        return page.locator(".modal-content").isVisible();
+        Locator confirmationPopup = page.locator(".modal-content");
+        try {
+            confirmationPopup.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
+            return confirmationPopup.isVisible();
+        } catch (PlaywrightException ex) {
+            return false;
+        }
     }
 
     public boolean isViewCartLinkVisibleInPopup() {
