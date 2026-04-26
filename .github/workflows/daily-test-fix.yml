@@ -70,7 +70,6 @@ jobs:
           else
             mvn clean test -Denv=${{ matrix.env }} -Dapp.headless=true
           fi
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.COPILOT_TOKEN }}
 
