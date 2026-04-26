@@ -10,6 +10,15 @@ on:
     - cron: '0 0 * * 0'
   workflow_dispatch:
     inputs:
+      env:
+        description: 'Environment to test'
+        required: false
+        default: 'qa'
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
       rerun_count:
         description: 'Rerun attempt number'
         required: false
@@ -23,8 +32,10 @@ permissions:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    outputs:
-      tests_failed: ${{ steps.run.outcome == 'failure' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        env: ${{ github.event_name == 'workflow_dispatch' && fromJson(format('["{0}"]', inputs.env != '' && inputs.env || 'qa')) || fromJson('["dev","qa","prod"]') }}
 
     steps:
       - uses: actions/checkout@v4
@@ -47,17 +58,17 @@ jobs:
             WORKFLOW_ID=$(gh api repos/${{ github.repository }}/actions/workflows --jq '.workflows[] | select(.name=="Daily Test And Auto Fix") | .id')
             RUN_ID=$(gh api "repos/${{ github.repository }}/actions/workflows/${WORKFLOW_ID}/runs?per_page=5&status=completed" --jq '.workflow_runs[0].id')
             if [ -n "$RUN_ID" ]; then
-              gh run download "$RUN_ID" -n testng-failed-xml -D testng-failed-artifact 2>/dev/null || true
+              gh run download "$RUN_ID" -n testng-failed-xml-${{ matrix.env }} -D testng-failed-artifact 2>/dev/null || true
             fi
             if [ -f "testng-failed-artifact/testng-failed.xml" ]; then
               echo "Running only failed tests from previous run..."
-              mvn test -DsuiteXmlFile=testng-failed-artifact/testng-failed.xml -Dapp.headless=true
+              mvn test -DsuiteXmlFile=testng-failed-artifact/testng-failed.xml -Denv=${{ matrix.env }} -Dapp.headless=true
             else
               echo "No failed tests XML found, running all tests..."
-              mvn clean test -Dapp.headless=true
+              mvn clean test -Denv=${{ matrix.env }} -Dapp.headless=true
             fi
           else
-            mvn clean test -Dapp.headless=true
+            mvn clean test -Denv=${{ matrix.env }} -Dapp.headless=true
           fi
         continue-on-error: true
         env:
@@ -72,7 +83,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: test-reports-${{ matrix.env }}
           path: |
             test-outcome.txt
             target/surefire-reports/
@@ -84,7 +95,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: testng-failed-xml
+          name: testng-failed-xml-${{ matrix.env }}
           path: target/surefire-reports/testng-failed.xml
           if-no-files-found: ignore
 
@@ -97,7 +108,7 @@ jobs:
           secure: true
           username: ${{ secrets.GMAIL_USERNAME }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          subject: "Test Report — ${{ steps.run.outcome == 'failure' && 'FAILURES DETECTED ❌' || 'ALL PASSED ✅' }} — ${{ github.repository }}"
+          subject: "Test Report [${{ matrix.env }}] — ${{ steps.run.outcome == 'failure' && 'FAILURES DETECTED ❌' || 'ALL PASSED ✅' }} — ${{ github.repository }}"
           to: harinder.qa.88@gmail.com
           from: Self-Healing Framework <${{ secrets.GMAIL_USERNAME }}>
           body: |
@@ -105,6 +116,7 @@ jobs:
 
             The daily test run has completed.
 
+            Environment: ${{ matrix.env }}
             Status: ${{ steps.run.outcome }}
             Repository: ${{ github.repository }}
             Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -116,7 +128,7 @@ jobs:
 
   report-success:
     needs: run-tests
-    if: needs.run-tests.outputs.tests_failed != 'true'
+    if: needs.run-tests.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: All Tests Passed
@@ -222,7 +234,7 @@ jobs:
 
   open-issue-and-assign-copilot:
     needs: run-tests
-    if: needs.run-tests.outputs.tests_failed == 'true'
+    if: needs.run-tests.result == 'failure'
     runs-on: ubuntu-latest
 
     steps:
